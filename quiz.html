@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-zinc-950">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survival Assessment | Survival.AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'], mono: ['Space Mono', 'monospace'] },
+                    colors: { amber: { 400: '#fbbf24', 500: '#f59e0b' } }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="text-zinc-200 antialiased min-h-screen flex flex-col items-center justify-center p-6 relative">
+    
+    <a href="index.html" class="absolute top-6 left-6 text-zinc-500 font-mono text-sm hover:text-amber-500 transition-colors">
+        ← Abort & Return to Terminal
+    </a>
+
+    <div class="max-w-2xl w-full bg-zinc-900/50 border border-zinc-800 p-8 md:p-12 shadow-2xl backdrop-blur-sm">
+        <div class="mb-8 border-b border-zinc-800 pb-6">
+            <span class="text-amber-500 font-mono text-xs uppercase tracking-widest mb-2 block">Phase 1 // Baseline</span>
+            <h1 class="text-3xl md:text-4xl font-black uppercase tracking-tight text-white">Pre-Simulation Quiz</h1>
+            <p class="text-zinc-400 mt-2 font-light">Determine your current biological panic response.</p>
+        </div>
+
+        <div id="quiz-container">
+            <h2 class="text-xl font-bold mb-6">Question 1: The power grid drops. It's night, and winter. What is your immediate first priority?</h2>
+            
+            <div class="space-y-3 font-mono text-sm">
+                <button class="w-full text-left p-4 border border-zinc-700 hover:border-amber-500 hover:bg-amber-500/10 transition-colors">
+                    A) Check social media for updates on your phone.
+                </button>
+                <button class="w-full text-left p-4 border border-zinc-700 hover:border-amber-500 hover:bg-amber-500/10 transition-colors">
+                    B) Secure insulation (blankets/clothes) and block drafts in one room.
+                </button>
+                <button class="w-full text-left p-4 border border-zinc-700 hover:border-amber-500 hover:bg-amber-500/10 transition-colors">
+                    C) Go outside to look for a generator or neighbors.
+                </button>
+                <button class="w-full text-left p-4 border border-zinc-700 hover:border-amber-500 hover:bg-amber-500/10 transition-colors">
+                    D) Start a fire in the living room for warmth.
+                </button>
+            </div>
+        </div>
+
+        <div class="mt-8 flex justify-between items-center pt-6 border-t border-zinc-800">
+            <span class="font-mono text-xs text-zinc-500">Score: 0/5</span>
+            <button class="bg-amber-500 text-zinc-950 px-6 py-2 font-bold font-mono text-sm uppercase hover:bg-amber-400 transition-colors">
+                Next Query →
+            </button>
+        </div>
+    </div>
+
+    <script src="src/js/quiz.js"></script>
+</body>
+</html>
