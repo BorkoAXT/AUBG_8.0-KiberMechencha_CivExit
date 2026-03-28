@@ -21,7 +21,7 @@
 
   const camera = new THREE.PerspectiveCamera(72, canvas.clientWidth / canvas.clientHeight, 0.05, 100);
   camera.rotation.order = "YXZ";
-  camera.position.set(0, 1.7, 0);  
+  camera.position.set(0, 1.7, 0);  // Spawn in living room
 
   // ── Game state ────────────────────────────────────────────────
   const STATE = { CALM: 0, QUAKE: 1, DONE: 2 };
@@ -44,9 +44,11 @@
   let   isCrouching  = false;
   let   currentEyeY  = EYE_STAND;
 
+  // Added a 3rd safe zone (Bedroom Desk)
   const safeZones = [
-    { center: new THREE.Vector3(-2.5, 0, 0.8), radius: 1.9 },
-    { center: new THREE.Vector3(3.5,  0, 5.0), radius: 1.5 },
+    { center: new THREE.Vector3(-2.5, 0, 0.8), radius: 1.9 }, // Living Room Table
+    { center: new THREE.Vector3(3.5,  0, 5.0), radius: 1.5 }, // Doorframe
+    { center: new THREE.Vector3(-3.5, 0, 7.5), radius: 1.2 }, // Bedroom Desk
   ];
 
   const debrisPool  = [];
@@ -64,6 +66,12 @@
   const ceilLight2 = new THREE.PointLight(0xfff0cc, 1.1, 9);
   ceilLight2.position.set(3, 2.7, -2);
   scene.add(ceilLight2);
+
+  // New Bedroom Light
+  const ceilLight3 = new THREE.PointLight(0xfff0cc, 1.6, 14);
+  ceilLight3.position.set(0, 2.7, 10);
+  ceilLight3.castShadow = true;
+  scene.add(ceilLight3);
 
   const windowGlow = new THREE.PointLight(0x8ab4e8, 0.6, 10);
   windowGlow.position.set(4.9, 1.8, -0.5);
@@ -96,10 +104,11 @@
     plaster:  new THREE.MeshLambertMaterial({ color: 0xd4c9b8 }),
     concrete: new THREE.MeshLambertMaterial({ color: 0x888888 }),
     debris:   new THREE.MeshLambertMaterial({ color: 0x7c5c3a }),
+    bed:      new THREE.MeshLambertMaterial({ color: 0xeeeeee }),
+    blanket:  new THREE.MeshLambertMaterial({ color: 0x3b5998 })
   };
 
   const colliders = [];
-  // Added crouchPassable to allow sliding under objects like the table top
   function addCollider(px, pz, hw, hd, crouchPassable = false) {
     colliders.push({ minX: px-hw, maxX: px+hw, minZ: pz-hd, maxZ: pz+hd, crouchPassable });
   }
@@ -114,20 +123,18 @@
     return mesh;
   }
 
-  // ── Room ──────────────────────────────────────────────────────
+  // ── LIVING ROOM ARCHITECTURE ──────────────────────────────────
   const RW = 10, RH = 3, RD = 10;
-
   b(RW, 0.12, RD,   M.floor,   0, -0.06, 0);           
   b(RW, 0.12, RD,   M.ceiling, 0, RH+0.06, 0);         
-
   b(RW, RH, 0.12,   M.wall,    0, RH/2, -5);           
   b(0.12, RH, RD,   M.wall,    -5, RH/2, 0);           
-
   b(0.12, RH, 4,    M.wall,    5, 1.5, 3);             
   b(0.12, RH, 3,    M.wall,    5, 1.5, -3.5);          
   b(0.12, 0.85, 3,  M.wall,    5, 0.425, -0.5);        
   b(0.12, 0.5, 3,   M.wall,    5, 2.75, -0.5);         
-
+  
+  // Dividing Wall between living room and bedroom
   b(7.6, RH, 0.12,  M.wall,    -1.2, 1.5, 5);          
   b(0.6, RH, 0.12,  M.wall,    4.7, 1.5, 5);           
   b(1.8, 0.6, 0.12, M.wall,    3.5, 2.7, 5);           
@@ -145,37 +152,56 @@
   b(0.14, 1.68, 0.1, M.windowFr, 5, 1.675, -1.95);
   b(0.14, 0.1,  3.0, M.windowFr, 5, 2.45, -0.5);
   b(0.14, 0.1,  3.0, M.windowFr, 5, 0.85, -0.5);
-
   b(0.14, 2.4, 0.18, M.doorFr,  2.65, 1.2, 5);
   b(0.14, 2.4, 0.18, M.doorFr,  4.35, 1.2, 5);
   b(1.7, 0.18, 0.18, M.doorFr,  3.5, 2.4, 5);
-  b(1.65, 2.35, 0.1, M.door,    3.5, 1.18, 4.95);
+  
+  // Door is now permanently rotated OPEN into the bedroom
+  b(0.1, 2.35, 1.65, M.door, 2.7, 1.18, 5.825);
+  addCollider(2.7, 5.825, 0.1, 0.825); 
 
-  // ── Furniture ─────────────────────────────────────────────────
+  // ── NEW BEDROOM ARCHITECTURE ──────────────────────────────────
+  b(RW, 0.12, RD,   M.floor,   0, -0.06, 10); // Floor extended
+  b(RW, 0.12, RD,   M.ceiling, 0, RH+0.06, 10); // Ceiling extended
+  b(0.12, RH, RD,   M.wall,    -5, RH/2, 10); // Bedroom left wall
+  b(0.12, RH, RD,   M.wall,    5, RH/2, 10);  // Bedroom right wall
+  b(RW, RH, 0.12,   M.wall,    0, RH/2, 15);  // Bedroom back wall
+
+  addCollider(-5, 10, 0.15, 5); 
+  addCollider(5, 10, 0.15, 5); 
+  addCollider(0, 15, 5, 0.15); 
+
+  // Bedroom ceiling light bulb
+  b(0.16, 0.25, 0.16, M.frame, 0, RH-0.12, 10);
+  const bulb3 = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 8), M.bulb);
+  bulb3.position.set(0, RH-0.3, 10);
+  scene.add(bulb3);
+
+
+  // ── LIVING ROOM FURNITURE ──────────────────────────────────────
   b(4.5, 0.02, 3.5, M.rug, -1, 0.01, 0.8);
-
-  // Sofa (Turned 180 degrees to face the TV at Z=-4.9)
-  b(3.4, 0.48, 1.0, M.sofa,    -1.5, 0.24, 3.0);       // Seat
-  b(3.4, 0.9,  0.24, M.sofa,   -1.5, 0.69, 3.38);      // Backrest (moved to +Z)
-  b(0.24, 0.68, 1.0, M.sofa,   -3.1, 0.48, 3.0);       // Left arm
-  b(0.24, 0.68, 1.0, M.sofa,    0.1, 0.48, 3.0);       // Right arm
-  b(0.95, 0.1, 0.85, M.sofaCush,-2.5, 0.5, 2.9);       // Cushions pushed slightly forward
+  
+  // Sofa
+  b(3.4, 0.48, 1.0, M.sofa,    -1.5, 0.24, 3.0);       
+  b(3.4, 0.9,  0.24, M.sofa,   -1.5, 0.69, 3.38);      
+  b(0.24, 0.68, 1.0, M.sofa,   -3.1, 0.48, 3.0);       
+  b(0.24, 0.68, 1.0, M.sofa,    0.1, 0.48, 3.0);       
+  b(0.95, 0.1, 0.85, M.sofaCush,-2.5, 0.5, 2.9);       
   b(0.95, 0.1, 0.85, M.sofaCush,-1.5, 0.5, 2.9);
   b(0.95, 0.1, 0.85, M.sofaCush,-0.5, 0.5, 2.9);
   addCollider(-1.5, 3.0, 1.75, 0.60);
 
-  // Table (Now with smart collision that allows crouching)
+  // Table
   b(3.0, 0.1, 1.8, M.tableTop, -2.5, 1.1, 0.8);     
   b(0.1, 1.05, 0.1, M.tableLeg, -3.9, 0.525,  1.65);
   b(0.1, 1.05, 0.1, M.tableLeg, -1.1, 0.525,  1.65);
   b(0.1, 1.05, 0.1, M.tableLeg, -3.9, 0.525, -0.05);
   b(0.1, 1.05, 0.1, M.tableLeg, -1.1, 0.525, -0.05);
-  
-  addCollider(-3.9, 1.65, 0.15, 0.15); // Legs block always
+  addCollider(-3.9, 1.65, 0.15, 0.15); 
   addCollider(-1.1, 1.65, 0.15, 0.15);
   addCollider(-3.9, -0.05, 0.15, 0.15);
   addCollider(-1.1, -0.05, 0.15, 0.15);
-  addCollider(-2.5, 0.8, 1.5, 0.9, true); // Main table blocks standing, allows crouching
+  addCollider(-2.5, 0.8, 1.5, 0.9, true); 
 
   // TV stand + TV
   b(2.8, 0.5, 0.55, M.darkWood,  0, 0.25, -4.9);
@@ -185,16 +211,14 @@
   b(1.9, 1.05, 0.08, M.frame,    0, 1.65, -4.86);
   addCollider(0, -4.9, 1.45, 0.32);
 
-  // Bookshelf (Rotated 90 degrees, set flush against left wall)
+  // Bookshelf
   const shX = -4.76, shZ = -3.5;
-  b(0.38, 2.3, 0.05, M.wood, shX, 1.15, shZ - 0.6);   // Side 1 (back of room)
-  b(0.38, 2.3, 0.05, M.wood, shX, 1.15, shZ + 0.6);   // Side 2 (front of room)
-  b(0.05, 2.3, 1.25, M.wood, -4.975, 1.15, shZ);      // Backboard touching the wall (-5.0)
-  
+  b(0.38, 2.3, 0.05, M.wood, shX, 1.15, shZ - 0.6);   
+  b(0.38, 2.3, 0.05, M.wood, shX, 1.15, shZ + 0.6);   
+  b(0.05, 2.3, 1.25, M.wood, -4.975, 1.15, shZ);      
   const shelfY = [0.1, 0.8, 1.5, 2.2];
   shelfY.forEach((y, index) => {
     b(0.33, 0.05, 1.15, M.wood, shX - 0.025, y, shZ);
-    // Remove books from the highest shelf (index 3)
     if (index < 3) {
       b(0.28, 0.58, 0.12, M.book,  shX - 0.025, y+0.31, shZ + 0.2);
       b(0.28, 0.62, 0.12, M.book2, shX - 0.025, y+0.33, shZ);
@@ -204,7 +228,6 @@
   });
   addCollider(shX, shZ, 0.22, 0.65); 
 
-  // Plant
   b(0.32, 0.42, 0.32, M.pot,  -4.4, 0.21, 2.8);
   const plantM = new THREE.Mesh(new THREE.SphereGeometry(0.48, 8, 8), M.plant);
   plantM.position.set(-4.4, 0.78, 2.8);
@@ -215,8 +238,38 @@
   const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 8), M.bulb);
   bulb.position.set(0, RH-0.3, 0);
   scene.add(bulb);
-  b(0.92, 0.68, 0.05, M.frame, -2.0, 1.65, -4.94);
-  b(0.68, 0.52, 0.05, M.frame,  1.6, 1.72, -4.94);
+
+
+  // ── NEW BEDROOM FURNITURE ──────────────────────────────────────
+
+  // Bed
+  b(3.5, 0.4, 4.5, M.wood, 2.5, 0.2, 12); // Bed frame
+  b(3.3, 0.25, 4.3, M.bed, 2.5, 0.45, 12); // Mattress
+  b(3.4, 0.27, 2.6, M.blanket, 2.5, 0.46, 12.85); // Blue Blanket
+  b(1.2, 0.15, 0.8, M.bed, 1.6, 0.6, 10.4); // Pillow 1
+  b(1.2, 0.15, 0.8, M.bed, 3.4, 0.6, 10.4); // Pillow 2
+  addCollider(2.5, 12, 1.75, 2.25);
+
+  // Bedroom Rug
+  b(4.0, 0.02, 4.0, M.rug, 0, 0.01, 11);
+
+  // Wardrobe (Tall and solid)
+  b(2.5, 2.5, 1.0, M.darkWood, -3.5, 1.25, 14.5);
+  addCollider(-3.5, 14.5, 1.25, 0.5);
+
+  // Bedroom Desk (New Safe Zone)
+  b(2.0, 0.1, 1.2, M.wood, -3.5, 1.0, 7.5); // Desktop
+  b(0.1, 1.0, 0.1, M.wood, -4.4, 0.5, 7.0); // Leg
+  b(0.1, 1.0, 0.1, M.wood, -2.6, 0.5, 7.0); // Leg
+  b(0.1, 1.0, 0.1, M.wood, -4.4, 0.5, 8.0); // Leg
+  b(0.1, 1.0, 0.1, M.wood, -2.6, 0.5, 8.0); // Leg
+  
+  addCollider(-4.4, 7.0, 0.05, 0.05); // Legs block always
+  addCollider(-2.6, 7.0, 0.05, 0.05);
+  addCollider(-4.4, 8.0, 0.05, 0.05);
+  addCollider(-2.6, 8.0, 0.05, 0.05);
+  addCollider(-3.5, 7.5, 1.0, 0.6, true); // Desk surface blocks standing, allows crouching
+
 
   // ── Safe zone visualisers ─────────────────────────────────────
   const safeViz = safeZones.map(sz => {
@@ -245,7 +298,8 @@
 
   // ── Debris pool init ──────────────────────────────────────────
   const debrisMats = [M.plaster, M.concrete, M.debris];
-  for (let i = 0; i < 35; i++) {
+  // Doubled debris limit to cover both rooms
+  for (let i = 0; i < 60; i++) {
     const s   = 0.07 + Math.random() * 0.25;
     const geo = Math.random() < 0.55
       ? new THREE.BoxGeometry(s, s*0.55, s*0.85)
@@ -288,13 +342,12 @@
     keys[e.code] = true;
     if (e.code === "KeyC") {
       if (isCrouching) {
-        // Prevent standing up while underneath the table
+        // Prevent standing up while underneath a table/desk
         const p = camera.position;
-        const tbl = safeZones[0];
-        const dx = p.x - tbl.center.x;
-        const dz = p.z - tbl.center.z;
-        const underTable = Math.sqrt(dx*dx + dz*dz) < tbl.radius;
-        if (!underTable) isCrouching = false;
+        const underLivingTable = Math.sqrt(Math.pow(p.x - safeZones[0].center.x, 2) + Math.pow(p.z - safeZones[0].center.z, 2)) < safeZones[0].radius;
+        const underBedroomDesk = Math.sqrt(Math.pow(p.x - safeZones[2].center.x, 2) + Math.pow(p.z - safeZones[2].center.z, 2)) < safeZones[2].radius;
+        
+        if (!underLivingTable && !underBedroomDesk) isCrouching = false;
       } else {
         isCrouching = true;
       }
@@ -308,12 +361,10 @@
   const fwd    = new THREE.Vector3();
   const rgt    = new THREE.Vector3();
   const mdir   = new THREE.Vector3();
-  const HW     = RW/2 - P_RAD;
-  const HD     = RD/2 - P_RAD;
 
   function resolveColliders(px, pz) {
     for (const c of colliders) {
-      if (c.crouchPassable && isCrouching) continue; // Bypass if crawling under
+      if (c.crouchPassable && isCrouching) continue; 
 
       const nearX = Math.max(c.minX, Math.min(c.maxX, px));
       const nearZ = Math.max(c.minZ, Math.min(c.maxZ, pz));
@@ -360,8 +411,9 @@
       const rz = resolveColliders(nx, nz);
       nx = rz.px; nz = rz.pz;
 
-      camera.position.x = Math.max(-HW, Math.min(HW, nx));
-      camera.position.z = Math.max(-HD, Math.min(HD, nz));
+      // New limits allowing you to walk all the way into the bedroom (Z boundary increased to 14.7)
+      camera.position.x = Math.max(-4.7, Math.min(4.7, nx));
+      camera.position.z = Math.max(-4.7, Math.min(14.7, nz));
     }
     camera.position.y = currentEyeY;
   }
@@ -373,8 +425,8 @@
       const dz   = p.z - sz.center.z;
       const inArea = Math.sqrt(dx*dx + dz*dz) < sz.radius;
       if (!inArea) return false;
-      if (i === 0) return isCrouching;  
-      return true;                      
+      if (i === 0 || i === 2) return isCrouching; // Table or Desk: must crouch
+      return true; // Doorframe: any stance
     });
   }
 
@@ -382,11 +434,12 @@
   function spawnDebris() {
     const chunk = debrisPool.find(d => !d.visible && d._fallen === false);
     if (!chunk) return;
-    chunk.position.set(
-      (Math.random()-0.5)*(RW-1.2),
-      RH - 0.05,
-      (Math.random()-0.5)*(RD-1.2)
-    );
+    
+    // Debris now randomly spawns in BOTH rooms
+    const rx = (Math.random() - 0.5) * 8.8;
+    const rz = -4.4 + Math.random() * 18.8; 
+
+    chunk.position.set(rx, RH - 0.05, rz);
     chunk._vy     = 0;
     chunk._fallen = false;
     chunk.visible = true;
@@ -522,18 +575,18 @@
     if (gameState === STATE.QUAKE) {
       timerEl.textContent = `QUAKE: ${Math.ceil(QUAKE_DURATION - quakeTimer)}s`;
       const p = camera.position;
-      const dx = p.x - safeZones[0].center.x;
-      const dz = p.z - safeZones[0].center.z;
-      const inTableArea = Math.sqrt(dx*dx + dz*dz) < safeZones[0].radius;
+      
+      const nearTable = Math.sqrt(Math.pow(p.x - safeZones[0].center.x, 2) + Math.pow(p.z - safeZones[0].center.z, 2)) < safeZones[0].radius;
+      const nearDesk = Math.sqrt(Math.pow(p.x - safeZones[2].center.x, 2) + Math.pow(p.z - safeZones[2].center.z, 2)) < safeZones[2].radius;
       
       if (isHiding) {
         statusEl.textContent = "✓ Stay hidden! Wait for it to pass...";
         statusEl.style.color = "#4ade80";
-      } else if (inTableArea && !isCrouching) {
-        statusEl.textContent = "⬇ CROUCH [C] to get under the table!";
+      } else if ((nearTable || nearDesk) && !isCrouching) {
+        statusEl.textContent = "⬇ CROUCH [C] to get underneath!";
         statusEl.style.color = "#fbbf24";
       } else {
-        statusEl.textContent = "⚠ GET UNDER THE TABLE [C] OR IN THE DOORFRAME!";
+        statusEl.textContent = "⚠ GET UNDER A DESK / TABLE OR IN THE DOORFRAME!";
         statusEl.style.color = "#f87171";
       }
     }
@@ -647,17 +700,21 @@
         }
       }
 
+      // Faster debris spawn rate to account for larger map
       debrisCooldown -= dt;
       if (debrisCooldown <= 0) {
-        const rate = Math.max(0.18, 0.7 - quakeTimer * 0.015);
+        const rate = Math.max(0.12, 0.5 - quakeTimer * 0.015);
         debrisCooldown = rate;
         spawnDebris();
-        if (quakeTimer > 8) spawnDebris(); 
+        if (quakeTimer > 5) spawnDebris(); // Double drop early
+        if (quakeTimer > 15) spawnDebris(); // Triple drop later
       }
       updateDebris(dt);
 
+      // Lights flicker
       ceilLight1.intensity = 1.8 + Math.sin(t * 22 + Math.random()) * 1.0 * ramp;
       ceilLight2.intensity = 1.1 + Math.sin(t * 17) * 0.6 * ramp;
+      ceilLight3.intensity = 1.6 + Math.sin(t * 19) * 0.8 * ramp;
 
       safeViz.forEach(v => {
         v.material.opacity = isHiding ? 0.35 : 0.18 + Math.sin(t*3)*0.08;
