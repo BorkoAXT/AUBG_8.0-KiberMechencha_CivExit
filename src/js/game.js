@@ -138,6 +138,16 @@
     debris: new THREE.MeshLambertMaterial({ color: 0x7c5c3a }),
     bed: new THREE.MeshLambertMaterial({ color: 0xeeeeee }),
     blanket: new THREE.MeshLambertMaterial({ color: 0x3b5998 }),
+    handle: new THREE.MeshStandardMaterial({
+      color: 0x8c8c8c,
+      roughness: 0.45,
+      metalness: 0.9,
+    }),
+    wardrobePanel: new THREE.MeshStandardMaterial({
+      color: 0x4a321c,
+      roughness: 0.9,
+      metalness: 0.0,
+    }),
   };
 
   // ── Lights ──────────────────────────────────────────────────
@@ -326,16 +336,43 @@
   scene.add(plantM);
 
   // ── BEDROOM FURNITURE ───────────────────────────────────────
+
+  // Bed rotated 180°: pillows/head side moved to the opposite end
   b(3.5, 0.4, 4.5, M.wood, 2.5, 0.2, 12);
   b(3.3, 0.25, 4.3, M.bed, 2.5, 0.45, 12);
-  b(3.4, 0.27, 2.6, M.blanket, 2.5, 0.46, 12.85);
-  b(1.2, 0.15, 0.8, M.bed, 1.6, 0.6, 10.4);
-  b(1.2, 0.15, 0.8, M.bed, 3.4, 0.6, 10.4);
+  b(3.4, 0.27, 2.6, M.blanket, 2.5, 0.46, 11.15);
+  b(1.2, 0.15, 0.8, M.bed, 1.6, 0.6, 13.6);
+  b(1.2, 0.15, 0.8, M.bed, 3.4, 0.6, 13.6);
   addCollider(2.5, 12, 1.75, 2.25);
 
   b(4.0, 0.02, 4.0, M.rug, 0, 0.01, 11);
 
+  // More detailed wardrobe
+  // main body
   b(2.5, 2.5, 1.0, M.darkWood, -3.5, 1.25, 14.5);
+  // top trim
+  b(2.66, 0.08, 1.08, M.wood, -3.5, 2.54, 14.5);
+  // bottom plinth
+  b(2.58, 0.12, 1.02, M.wood, -3.5, 0.06, 14.5);
+  // side outer trims
+  b(0.08, 2.42, 1.04, M.wood, -4.75, 1.25, 14.5);
+  b(0.08, 2.42, 1.04, M.wood, -2.25, 1.25, 14.5);
+  // door panels
+  b(0.78, 2.22, 0.05, M.wardrobePanel, -4.08, 1.26, 13.98);
+  b(0.78, 2.22, 0.05, M.wardrobePanel, -3.5, 1.26, 13.98);
+  b(0.78, 2.22, 0.05, M.wardrobePanel, -2.92, 1.26, 13.98);
+  // door separators
+  b(0.04, 2.28, 0.06, M.wood, -3.79, 1.26, 13.99);
+  b(0.04, 2.28, 0.06, M.wood, -3.21, 1.26, 13.99);
+  // door handles
+  b(0.04, 0.28, 0.03, M.handle, -3.82, 1.28, 13.94);
+  b(0.04, 0.28, 0.03, M.handle, -3.18, 1.28, 13.94);
+  // subtle feet
+  b(0.18, 0.08, 0.18, M.wood, -4.45, 0.04, 14.12);
+  b(0.18, 0.08, 0.18, M.wood, -2.55, 0.04, 14.12);
+  b(0.18, 0.08, 0.18, M.wood, -4.45, 0.04, 14.88);
+  b(0.18, 0.08, 0.18, M.wood, -2.55, 0.04, 14.88);
+
   addCollider(-3.5, 14.5, 1.25, 0.5);
 
   b(2.0, 0.1, 1.2, M.wood, -3.5, 1.0, 7.5);
