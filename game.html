@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earthquake Survival Scenario</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* Base Reset */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #1a1410; /* Matches scene background */
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
+            user-select: none;
+        }
+
+        /* Game Container & Canvas */
+        #game-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        /* --- Dynamically Generated HUD Styles --- */
+        
+        /* Start Hint Overlay */
+        #game-hint {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            pointer-events: none; /* Let clicks pass through to canvas */
+        }
+        .gh-title { font-size: 2rem; font-weight: 900; color: #fbbf24; margin-bottom: 0.5rem; letter-spacing: 2px; }
+        .gh-sub { font-size: 1.2rem; color: #d1c9bb; margin-bottom: 2rem; }
+        .gh-keys { font-family: 'Space Mono', monospace; font-size: 0.9rem; color: #9ca3af; margin-bottom: 2rem; }
+        .gh-keys span { background: #374151; padding: 2px 6px; border-radius: 4px; color: #fff; }
+        .gh-warn { font-size: 1rem; color: #f87171; border: 1px solid rgba(248, 113, 113, 0.3); padding: 10px 20px; border-radius: 4px; background: rgba(248, 113, 113, 0.1); }
+
+        /* Crosshair */
+        #game-crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Status & Timer */
+        #game-status {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Space Mono', monospace;
+            font-size: 1rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            z-index: 10;
+            text-align: center;
+        }
+        #game-timer {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Space Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ef4444;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            z-index: 10;
+        }
+
+        /* Indicators */
+        #safe-label, #crouch-indicator {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Space Mono', monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 4px;
+            z-index: 10;
+        }
+        #safe-label { background: rgba(74, 222, 128, 0.2); color: #4ade80; border: 1px solid #4ade80; }
+        #crouch-indicator { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid #fbbf24; bottom: 130px; }
+
+        /* Health & Panic Bars */
+        #panic-wrap, #health-wrap {
+            position: absolute;
+            bottom: 30px;
+            width: 200px;
+            z-index: 10;
+        }
+        #health-wrap { left: 30px; }
+        #panic-wrap { right: 30px; }
+        
+        #panic-label, #health-label {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+        #panic-bar, #health-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        #panic-fill, #health-fill {
+            height: 100%;
+            transition: width 0.2s linear, background-color 0.2s linear;
+        }
+
+        /* Outcome Screen */
+        #outcome-screen {
+            position: absolute;
+            inset: 0;
+            background: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .outcome-box {
+            background: #1f1f1f;
+            border: 1px solid #333;
+            padding: 40px;
+            border-radius: 8px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .outcome-badge {
+            display: inline-block;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border: 1px solid;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+        .outcome-title { font-size: 2rem; font-weight: 900; margin-bottom: 15px; }
+        .outcome-body { font-size: 1rem; color: #a1a1aa; line-height: 1.5; margin-bottom: 30px; }
+        .outcome-stats { display: flex; justify-content: space-around; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 6px; margin-bottom: 30px; font-family: 'Space Mono', monospace; font-size: 0.9rem; }
+        .outcome-btn {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: transform 0.1s, background 0.2s;
+        }
+        .outcome-btn:hover { background: #e5e5e5; transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <canvas id="game-canvas"></canvas>
+    </div>
+
+    <script src="src/js/game.js"></script>
+
+</body>
+</html>
