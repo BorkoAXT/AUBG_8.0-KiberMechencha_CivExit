@@ -3,60 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Survival Assessment | CivExit</title>
+    <title>Idea Validation Survey | CivExit</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: { sans: ['Outfit', 'sans-serif'], mono: ['Space Mono', 'monospace'] },
-                    colors: { amber: { 400: '#fbbf24', 500: '#f59e0b' } }
+                    colors: { amber: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706' } }
                 }
             }
         }
     </script>
+    <style>
+        .option-btn.selected {
+            border-color: #f59e0b;
+            background-color: rgba(245, 158, 11, 0.1);
+            color: white;
+        }
+        .multi-btn.selected {
+            border-color: #f59e0b;
+            background-color: rgba(245, 158, 11, 0.08);
+        }
+    </style>
 </head>
-<body class="text-zinc-200 antialiased min-h-screen flex flex-col items-center justify-center p-6 relative">
-    
-    <a href="index.html" class="absolute top-6 left-6 text-zinc-500 font-mono text-sm hover:text-amber-500 transition-colors">
-        ← Abort & Return to Terminal
-    </a>
+<body class="text-zinc-200 antialiased bg-zinc-950 min-h-screen">
 
-    <div class="max-w-2xl w-full bg-zinc-900/50 border border-zinc-800 p-8 md:p-12 shadow-2xl backdrop-blur-sm">
-        <div class="mb-8 border-b border-zinc-800 pb-6">
-            <span class="text-amber-500 font-mono text-xs uppercase tracking-widest mb-2 block">Phase 1 // Baseline</span>
-            <h1 class="text-3xl md:text-4xl font-black uppercase tracking-tight text-white">Pre-Simulation Quiz</h1>
-            <p class="text-zinc-400 mt-2 font-light">Determine your current biological panic response.</p>
-        </div>
+    <!-- Alert bar -->
+    <div class="w-full bg-amber-500 text-zinc-950 font-mono text-[10px] font-bold uppercase tracking-[0.2em] py-1.5 px-4 flex justify-between items-center">
+        <span class="flex items-center gap-2">
+            <span class="w-2 h-2 bg-zinc-950 rounded-full animate-pulse"></span>
+            Hackathon Idea Validation
+        </span>
+        <span class="hidden sm:inline">CivExit // Live Survey</span>
+    </div>
 
-        <div id="quiz-container">
-            <h2 class="text-xl font-bold mb-6">Question 1: The power grid drops. It's night, and winter. What is your immediate first priority?</h2>
-            
-            <div class="space-y-3 font-mono text-sm">
-                <button class="w-full text-left p-4 border border-zinc-700 hover:border-amber-500 hover:bg-amber-500/10 transition-colors">
-                    A) Check social media for updates on your phone.
-                </button>
-                <button class="w-full text-left p-4 border border-zinc-700 hover:border-amber-500 hover:bg-amber-500/10 transition-colors">
-                    B) Secure insulation (blankets/clothes) and block drafts in one room.
-                </button>
-                <button class="w-full text-left p-4 border border-zinc-700 hover:border-amber-500 hover:bg-amber-500/10 transition-colors">
-                    C) Go outside to look for a generator or neighbors.
-                </button>
-                <button class="w-full text-left p-4 border border-zinc-700 hover:border-amber-500 hover:bg-amber-500/10 transition-colors">
-                    D) Start a fire in the living room for warmth.
-                </button>
+    <!-- Quiz phase -->
+    <div id="quiz-phase" class="flex flex-col items-center justify-center px-6 py-12 min-h-[calc(100vh-32px)]">
+        <div class="max-w-2xl w-full">
+
+            <!-- Back link + intro -->
+            <div class="mb-8">
+                <a href="index.html" class="text-zinc-500 font-mono text-xs hover:text-amber-500 transition-colors">← Abort &amp; Return to Terminal</a>
+                <div class="mt-6 p-4 bg-zinc-900/60 border border-zinc-700" style="border-left: 3px solid #f59e0b;">
+                    <p class="font-mono text-xs text-zinc-400 leading-relaxed">
+                        <span class="text-amber-500 font-bold">// IDEA VALIDATION //</span><br/>
+                        Hey! We're at a hackathon and need validation for our idea — please fill out this short survey!<br/>
+                        <span class="text-zinc-300">CivExit</span> is an educational disaster simulation game where the player must make clear decisions under panic to survive.
+                    </p>
+                </div>
             </div>
-        </div>
 
-        <div class="mt-8 flex justify-between items-center pt-6 border-t border-zinc-800">
-            <span class="font-mono text-xs text-zinc-500">Score: 0/5</span>
-            <button class="bg-amber-500 text-zinc-950 px-6 py-2 font-bold font-mono text-sm uppercase hover:bg-amber-400 transition-colors">
-                Next Query →
-            </button>
+            <!-- Card -->
+            <div id="quiz-wrapper" class="bg-zinc-900/50 border border-zinc-800 p-8 md:p-10 shadow-2xl">
+
+                <!-- Progress -->
+                <div class="mb-8" id="progress-area">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-mono text-[10px] text-zinc-500 uppercase tracking-widest">Survey Progress</span>
+                        <span id="progress-text" class="font-mono text-[10px] text-amber-500">1 / 7</span>
+                    </div>
+                    <div class="w-full h-[2px] bg-zinc-800">
+                        <div id="progress-bar" class="h-full bg-amber-500 transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Question output -->
+                <div id="quiz-container"></div>
+            </div>
         </div>
     </div>
 
+    <!-- Results phase (hidden until submit) -->
+    <div id="results-phase" class="hidden px-6 pb-20 pt-12">
+        <div class="max-w-6xl mx-auto">
+
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <span class="text-amber-500 font-mono text-[10px] uppercase tracking-widest block mb-2">Assessment Complete // Global Intelligence</span>
+                <h2 class="text-4xl md:text-5xl font-black uppercase tracking-tight text-white">Collective Survival Data</h2>
+                <p class="text-zinc-500 font-mono text-sm mt-3 max-w-xl mx-auto">
+                    Aggregate responses from all participants. Top 10 answers shown per question.
+                </p>
+                <div id="total-responses" class="mt-5 inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 font-mono text-xs text-zinc-400">
+                    <span class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
+                    Syncing database...
+                </div>
+                <div class="mt-6">
+                    <a href="index.html" class="inline-block px-8 py-3 border border-zinc-700 text-zinc-400 font-mono text-xs uppercase tracking-widest hover:bg-zinc-800 hover:text-amber-500 transition-all">
+                        ← Return to Terminal
+                    </a>
+                </div>
+            </div>
+
+            <!-- Charts grid -->
+            <div id="charts-grid" class="grid md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+        </div>
+    </div>
+
+    <script src="src/js/config.js"></script>
     <script src="src/js/quiz.js"></script>
 </body>
 </html>
