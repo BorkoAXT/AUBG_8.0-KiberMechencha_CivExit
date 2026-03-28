@@ -674,7 +674,7 @@
         statusEl.textContent = "⬇ CROUCH [C] to get underneath!";
         statusEl.style.color = "#fbbf24";
       } else {
-        statusEl.textContent = "⚠ GET UNDER A DESK / TABLE OR IN THE DOORFRAME!";
+        statusEl.textContent = "⚠ FIND COVER!";
         statusEl.style.color = "#f87171";
       }
     }
