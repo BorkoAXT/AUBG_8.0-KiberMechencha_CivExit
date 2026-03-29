@@ -531,17 +531,17 @@ async function loadAndRenderCharts() {
         const total  = values.reduce((a, b) => a + b, 0);
 
         const card = document.createElement('div');
-        card.className = 'bg-zinc-900/50 border border-zinc-800 p-5 hover:border-amber-500/30 transition-all';
+        card.className = 'bg-zinc-900/50 border border-zinc-800 p-3 md:p-5 hover:border-amber-500/30 transition-all';
 
         card.innerHTML = `
-            <h3 class="font-mono text-xs text-amber-500 uppercase tracking-[0.2em] mb-4 border-b border-zinc-800 pb-2 flex justify-between">
+            <h3 class="font-mono text-xs text-amber-500 uppercase tracking-[0.2em] mb-3 border-b border-zinc-800 pb-2 flex justify-between">
                 <span>${CHART_LABELS[q.id]}</span>
                 <span class="text-zinc-600">Q${q.number}</span>
             </h3>
-            <div class="relative mx-auto" style="height:200px; max-width:200px;">
+            <div class="relative mx-auto" style="height:160px; max-width:160px;">
                 <canvas id="chart-${q.id}"></canvas>
             </div>
-            <ul class="mt-5 space-y-1.5">
+            <ul class="mt-3 space-y-1">
                 ${top10.map(([label, count], i) => `
                     <li class="flex justify-between items-center font-mono text-xs">
                         <span class="flex items-center gap-2 min-w-0">
@@ -611,4 +611,10 @@ function normalizeFirstItem(val) {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
-document.addEventListener('DOMContentLoaded', render);
+// Scripts are loaded at the bottom of <body> so the DOM is already ready.
+// Calling render() directly is more reliable than DOMContentLoaded on CDN deploys.
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', render);
+} else {
+    render();
+}

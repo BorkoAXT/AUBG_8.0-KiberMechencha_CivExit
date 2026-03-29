@@ -559,36 +559,36 @@
         .menu-btn:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
 
         /* ── Mobile controls ───────────────────────────────── */
+        /* Left side: joystick */
         #mobile-controls {
             position: fixed;
             bottom: 0; left: 0; right: 0;
-            height: 110px;
+            height: 130px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 16px 14px;
+            align-items: flex-end;
+            padding: 0 0 16px 0;
             z-index: 300;
             pointer-events: none;
-            background: linear-gradient(to top, rgba(0,0,0,0.55), transparent);
         }
 
-        .joystick-zone {
-            width: 80px; height: 80px;
+        #joystick-move {
+            width: 90px; height: 90px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.12);
-            border: 2px solid rgba(255,255,255,0.35);
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
             position: relative;
             pointer-events: all;
             touch-action: none;
             flex-shrink: 0;
+            margin-left: 16px;
         }
 
         .joystick-label {
             position: absolute;
-            bottom: -16px; left: 50%; transform: translateX(-50%);
+            bottom: -17px; left: 50%; transform: translateX(-50%);
             font-family: var(--font-mono);
-            font-size: 0.45rem; letter-spacing: 0.1em;
-            color: rgba(255,255,255,0.35);
+            font-size: 0.48rem; letter-spacing: 0.12em;
+            color: rgba(255,255,255,0.4);
             text-transform: uppercase; white-space: nowrap;
         }
 
@@ -596,53 +596,80 @@
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 32px; height: 32px;
+            width: 36px; height: 36px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.4);
-            border: 2px solid rgba(255,255,255,0.65);
+            background: rgba(255,255,255,0.38);
+            border: 2px solid rgba(255,255,255,0.6);
             box-shadow: 0 0 10px rgba(255,255,255,0.2);
-            transition: background 0.1s;
+        }
+
+        /* Right side: look zone + action buttons */
+        #look-zone {
+            flex: 1;
+            height: 100%;
+            position: relative;
+            pointer-events: all;
+            touch-action: none;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+            padding-right: 14px;
+            padding-bottom: 0;
+        }
+
+        #look-hint {
+            position: absolute;
+            top: 8px; left: 50%; transform: translateX(-50%);
+            font-family: var(--font-mono);
+            font-size: 0.42rem; letter-spacing: 0.12em;
+            color: rgba(255,255,255,0.2);
+            text-transform: uppercase; white-space: nowrap;
+            pointer-events: none;
         }
 
         .action-buttons {
             display: flex;
-            flex-direction: column;
-            gap: 6px;
+            flex-direction: row;
+            gap: 8px;
             pointer-events: all;
-            align-items: center;
+            align-items: flex-end;
         }
 
         .action-btn-wrap {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2px;
+            gap: 3px;
         }
 
         .action-btn-wrap span {
             font-family: var(--font-mono);
-            font-size: 0.42rem;
+            font-size: 0.44rem;
             letter-spacing: 0.08em;
-            color: rgba(255,255,255,0.35);
+            color: rgba(255,255,255,0.4);
             text-transform: uppercase;
         }
 
         .action-buttons button {
-            width: 38px; height: 38px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.15);
-            border: 2px solid rgba(255,255,255,0.4);
-            font-size: 1rem;
+            width: 52px; height: 36px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.12);
+            border: 1.5px solid rgba(255,255,255,0.35);
+            font-family: var(--font-mono);
+            font-size: 0.55rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
             cursor: pointer;
             touch-action: none;
             color: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-            transition: background 0.1s, transform 0.1s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            transition: background 0.08s, transform 0.08s;
         }
 
         .action-buttons button:active {
-            background: rgba(255,255,255,0.35);
-            transform: scale(0.9);
+            background: rgba(255,255,255,0.3);
+            transform: scale(0.93);
         }
 
         /* ── Portrait warning (phones only) ───────────────── */
@@ -821,27 +848,23 @@
     <div id="game-wrapper">
         <canvas id="game-canvas"></canvas>
         <div id="mobile-controls" style="display: none;">
-            <div id="joystick-move" class="joystick-zone">
+            <div id="joystick-move">
                 <div class="joystick-knob"></div>
                 <span class="joystick-label">Move</span>
             </div>
-            <div class="action-buttons">
-                <div class="action-btn-wrap">
-                    <button id="btn-sprint">🏃</button>
-                    <span>Sprint</span>
+            <div id="look-zone">
+                <span id="look-hint">swipe to look</span>
+                <div class="action-buttons">
+                    <div class="action-btn-wrap">
+                        <button id="btn-sprint">SPRINT</button>
+                    </div>
+                    <div class="action-btn-wrap">
+                        <button id="btn-crouch">CROUCH</button>
+                    </div>
+                    <div class="action-btn-wrap">
+                        <button id="btn-interact">USE</button>
+                    </div>
                 </div>
-                <div class="action-btn-wrap">
-                    <button id="btn-crouch">🧎</button>
-                    <span>Crouch</span>
-                </div>
-                <div class="action-btn-wrap">
-                    <button id="btn-interact">🖐</button>
-                    <span>Use</span>
-                </div>
-            </div>
-            <div id="joystick-look" class="joystick-zone">
-                <div class="joystick-knob"></div>
-                <span class="joystick-label">Look</span>
             </div>
         </div>
     </div>
@@ -879,6 +902,48 @@
         const mobileControls = document.getElementById('mobile-controls');
         if (mobileControls) mobileControls.style.display = 'flex';
 
+        // ── Wake Lock: keep screen on during gameplay ──────────
+        let wakeLock = null;
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                } catch (e) { /* not critical */ }
+            }
+        }
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible' && wakeLock === null) requestWakeLock();
+        });
+        // Acquire on first touch (requires user gesture on some browsers)
+        document.addEventListener('touchstart', function() { if (!wakeLock) requestWakeLock(); }, { once: true });
+
+        // ── Hint overlay: tap to dismiss on mobile ─────────────
+        function patchHintOverlay(el) {
+            el.style.cursor = 'pointer';
+            el.addEventListener('touchstart', function(e) {
+                e.stopPropagation();
+                el.style.display = 'none';
+            }, { passive: true, once: true });
+        }
+        // Patch any hint/overlay already in the DOM
+        document.querySelectorAll('[id*="hint"], [id*="overlay"], [id*="intro"], [class*="hint"], [class*="overlay"]').forEach(function(el) {
+            if (el !== mobileControls && el.offsetParent !== null) patchHintOverlay(el);
+        });
+        // Watch for dynamically created hint overlays
+        new MutationObserver(function(mutations) {
+            mutations.forEach(function(m) {
+                m.addedNodes.forEach(function(node) {
+                    if (node.nodeType !== 1) return;
+                    var id = (node.id || '').toLowerCase();
+                    var cls = (node.className || '').toLowerCase();
+                    if (id.includes('hint') || id.includes('overlay') || id.includes('intro') ||
+                        cls.includes('hint') || cls.includes('overlay')) {
+                        patchHintOverlay(node);
+                    }
+                });
+            });
+        }).observe(document.body, { childList: true, subtree: true });
+
         function triggerKey(key, isDown) {
             const evt = new KeyboardEvent(isDown ? 'keydown' : 'keyup', { code: key, key: key, bubbles: true });
             window.dispatchEvent(evt);
@@ -889,75 +954,80 @@
         for (const id in btnMap) {
             const btn = document.getElementById(id);
             if (!btn) continue;
-            btn.addEventListener('touchstart', function(e) { e.preventDefault(); triggerKey(btnMap[id], true); });
-            btn.addEventListener('touchend',   function(e) { e.preventDefault(); triggerKey(btnMap[id], false); });
+            btn.addEventListener('touchstart', function(e) { e.preventDefault(); triggerKey(btnMap[id], true); }, { passive: false });
+            btn.addEventListener('touchend',   function(e) { e.preventDefault(); triggerKey(btnMap[id], false); }, { passive: false });
         }
 
-        function setupJoystick(zoneId, callback) {
-            const zone = document.getElementById(zoneId);
+        // ── Move joystick ──────────────────────────────────────
+        (function() {
+            const zone = document.getElementById('joystick-move');
             if (!zone) return;
             const knob = zone.querySelector('.joystick-knob');
             const radius = 50;
             let center = { x: 0, y: 0 };
+            let activeKeys = new Set();
 
             zone.addEventListener('touchstart', function(e) {
                 e.preventDefault();
                 const rect = zone.getBoundingClientRect();
                 center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-                handleTouch(e.touches[0]);
+                handle(e.touches[0]);
             }, { passive: false });
-
-            zone.addEventListener('touchmove', function(e) {
-                e.preventDefault();
-                handleTouch(e.touches[0]);
-            }, { passive: false });
-
+            zone.addEventListener('touchmove', function(e) { e.preventDefault(); handle(e.touches[0]); }, { passive: false });
             zone.addEventListener('touchend', function(e) {
                 e.preventDefault();
                 knob.style.transform = 'translate(-50%, -50%)';
-                callback(0, 0);
+                activeKeys.forEach(function(k) { triggerKey(k, false); });
+                activeKeys.clear();
             }, { passive: false });
 
-            function handleTouch(touch) {
+            function handle(touch) {
                 let dx = touch.clientX - center.x;
                 let dy = touch.clientY - center.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist > radius) { dx = (dx / dist) * radius; dy = (dy / dist) * radius; }
+                if (dist > radius) { dx = dx / dist * radius; dy = dy / dist * radius; }
                 knob.style.transform = 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px))';
-                callback(dx / radius, dy / radius);
+                const nx = dx / radius, ny = dy / radius, t = 0.3;
+                const newKeys = new Set();
+                if (ny < -t) newKeys.add('KeyW');
+                if (ny > t)  newKeys.add('KeyS');
+                if (nx < -t) newKeys.add('KeyA');
+                if (nx > t)  newKeys.add('KeyD');
+                activeKeys.forEach(function(k) { if (!newKeys.has(k)) triggerKey(k, false); });
+                newKeys.forEach(function(k)    { if (!activeKeys.has(k)) triggerKey(k, true); });
+                activeKeys = newKeys;
             }
-        }
+        })();
 
-        let activeKeys = new Set();
-        setupJoystick('joystick-move', function(x, y) {
-            const t = 0.3;
-            const newKeys = new Set();
-            if (y < -t) newKeys.add('KeyW');
-            if (y > t)  newKeys.add('KeyS');
-            if (x < -t) newKeys.add('KeyA');
-            if (x > t)  newKeys.add('KeyD');
-            activeKeys.forEach(function(k) { if (!newKeys.has(k)) triggerKey(k, false); });
-            newKeys.forEach(function(k)    { if (!activeKeys.has(k)) triggerKey(k, true); });
-            activeKeys = newKeys;
-        });
+        // ── Look zone (swipe on right half) ───────────────────
+        (function() {
+            const zone = document.getElementById('look-zone');
+            if (!zone) return;
+            let lastX = 0, lastY = 0, tracking = false;
 
-        let lookLoop = null;
-        let lookVec = { x: 0, y: 0 };
-        setupJoystick('joystick-look', function(nx, ny) {
-            lookVec = { x: nx, y: ny };
-            if (nx === 0 && ny === 0) {
-                if (lookLoop) { cancelAnimationFrame(lookLoop); lookLoop = null; }
-            } else if (!lookLoop) {
-                (function loop() {
-                    if (lookVec.x !== 0 || lookVec.y !== 0) {
-                        document.dispatchEvent(new CustomEvent('mobilelook', {
-                            detail: { movementX: lookVec.x * 7, movementY: lookVec.y * 7 }
-                        }));
-                    }
-                    lookLoop = requestAnimationFrame(loop);
-                })();
-            }
-        });
+            zone.addEventListener('touchstart', function(e) {
+                // Ignore if touch is on an action button
+                if (e.target.tagName === 'BUTTON') return;
+                e.preventDefault();
+                const t = e.changedTouches[0];
+                lastX = t.clientX; lastY = t.clientY;
+                tracking = true;
+            }, { passive: false });
+
+            zone.addEventListener('touchmove', function(e) {
+                if (!tracking) return;
+                e.preventDefault();
+                const t = e.changedTouches[0];
+                const dx = t.clientX - lastX;
+                const dy = t.clientY - lastY;
+                lastX = t.clientX; lastY = t.clientY;
+                document.dispatchEvent(new CustomEvent('mobilelook', {
+                    detail: { movementX: dx * 1.4, movementY: dy * 1.4 }
+                }));
+            }, { passive: false });
+
+            zone.addEventListener('touchend', function(e) { tracking = false; }, { passive: false });
+        })();
 
         // Prevent default touch scroll on game canvas
         document.getElementById('game-canvas').addEventListener('touchstart', function(e) {
