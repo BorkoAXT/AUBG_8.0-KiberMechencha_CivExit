@@ -53,6 +53,162 @@
     let shakeIntensity = 0;
     const cameraBase = new THREE.Vector3();
 
+    // ── Procedural Audio Engine ─────────────────────────────────
+    let eqAudioCtx = null;
+    const eqSounds = {};
+
+    function initAudio() {
+      try {
+        eqAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Master gain
+        const masterGain = eqAudioCtx.createGain();
+        masterGain.gain.value = 0.8;
+        masterGain.connect(eqAudioCtx.destination);
+        eqSounds._master = masterGain;
+
+        // Low-frequency rumble (looped noise + oscillator)
+        function createRumbleBuffer() {
+          const len = eqAudioCtx.sampleRate * 2;
+          const buf = eqAudioCtx.createBuffer(1, len, eqAudioCtx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < len; i++) {
+            const t = i / eqAudioCtx.sampleRate;
+            d[i] = (Math.random() * 2 - 1) * 0.6
+                 + Math.sin(t * Math.PI * 2 * 28) * 0.15
+                 + Math.sin(t * Math.PI * 2 * 42) * 0.1;
+          }
+          return buf;
+        }
+        const rumbleSrc = eqAudioCtx.createBufferSource();
+        rumbleSrc.buffer = createRumbleBuffer();
+        rumbleSrc.loop = true;
+        const rumbleFilter = eqAudioCtx.createBiquadFilter();
+        rumbleFilter.type = 'lowpass';
+        rumbleFilter.frequency.value = 120;
+        const rumbleGain = eqAudioCtx.createGain();
+        rumbleGain.gain.value = 0;
+        rumbleSrc.connect(rumbleFilter);
+        rumbleFilter.connect(rumbleGain);
+        rumbleGain.connect(masterGain);
+        rumbleSrc.start();
+        eqSounds.rumble = { gain: rumbleGain, filter: rumbleFilter };
+
+        // Creaking structure sound
+        function createCreakBuffer() {
+          const len = eqAudioCtx.sampleRate * 1.2;
+          const buf = eqAudioCtx.createBuffer(1, len, eqAudioCtx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < len; i++) {
+            const t = i / eqAudioCtx.sampleRate;
+            const env = t < 0.05 ? t / 0.05 : Math.exp(-(t - 0.05) * 2.5);
+            d[i] = Math.sin(t * Math.PI * 2 * 180 * (1 + Math.sin(t * 8) * 0.12)) * env * 0.7
+                 + (Math.random() * 2 - 1) * env * 0.2;
+          }
+          return buf;
+        }
+        eqSounds._creakBuf = createCreakBuffer();
+
+        // Debris impact sound
+        function createImpactBuffer() {
+          const len = eqAudioCtx.sampleRate * 0.35;
+          const buf = eqAudioCtx.createBuffer(1, len, eqAudioCtx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < len; i++) {
+            const t = i / eqAudioCtx.sampleRate;
+            const env = Math.exp(-t * 14);
+            d[i] = (Math.random() * 2 - 1) * env * 0.9
+                 + Math.sin(t * Math.PI * 2 * 90) * env * 0.4;
+          }
+          return buf;
+        }
+        eqSounds._impactBuf = createImpactBuffer();
+
+        // Heartbeat sound for high panic
+        function createHeartbeatBuffer() {
+          const len = eqAudioCtx.sampleRate * 0.8;
+          const buf = eqAudioCtx.createBuffer(1, len, eqAudioCtx.sampleRate);
+          const d = buf.getChannelData(0);
+          function beat(offset) {
+            for (let i = 0; i < len; i++) {
+              const t = (i / eqAudioCtx.sampleRate) - offset;
+              if (t >= 0 && t < 0.12) {
+                const env = t < 0.04 ? t / 0.04 : Math.exp(-(t - 0.04) * 18);
+                d[i] += Math.sin(t * Math.PI * 2 * 55) * env * 0.7;
+              }
+            }
+          }
+          beat(0.05); beat(0.22);
+          return buf;
+        }
+        const hbSrc = eqAudioCtx.createBufferSource();
+        hbSrc.buffer = createHeartbeatBuffer();
+        hbSrc.loop = true;
+        const hbGain = eqAudioCtx.createGain();
+        hbGain.gain.value = 0;
+        hbSrc.connect(hbGain);
+        hbGain.connect(masterGain);
+        hbSrc.start();
+        eqSounds.heartbeat = { gain: hbGain, src: hbSrc };
+
+      } catch(e) {
+        console.warn('Audio init failed:', e);
+        eqAudioCtx = null;
+      }
+    }
+
+    function playOneShot(buf, vol) {
+      if (!eqAudioCtx || !buf) return;
+      try {
+        const src = eqAudioCtx.createBufferSource();
+        src.buffer = buf;
+        const g = eqAudioCtx.createGain();
+        g.gain.value = vol || 1;
+        src.connect(g);
+        g.connect(eqSounds._master || eqAudioCtx.destination);
+        src.start();
+      } catch(e) {}
+    }
+
+    function resumeAudio() {
+      if (eqAudioCtx && eqAudioCtx.state === 'suspended') eqAudioCtx.resume();
+    }
+
+    function updateAudio(dt) {
+      if (!eqAudioCtx || !eqSounds.rumble) return;
+
+      if (gameState === STATE.QUAKE) {
+        // Ramp up rumble with shake intensity
+        const targetVol = shakeIntensity * 6;
+        const current = eqSounds.rumble.gain.gain.value;
+        eqSounds.rumble.gain.gain.value += (targetVol - current) * dt * 3;
+        eqSounds.rumble.filter.frequency.value = 80 + shakeIntensity * 800;
+
+        // Heartbeat when panic is high
+        const panicNorm = Math.max(0, (panic - 60) / 40);
+        eqSounds.heartbeat.gain.gain.value += (panicNorm * 0.8 - eqSounds.heartbeat.gain.gain.value) * dt * 2;
+
+        // Occasional creak
+        if (Math.random() < dt * 0.6 * (shakeIntensity * 8)) {
+          playOneShot(eqSounds._creakBuf, 0.4 + Math.random() * 0.3);
+        }
+      } else {
+        // Fade out when not quaking
+        eqSounds.rumble.gain.gain.value *= Math.pow(0.05, dt);
+        eqSounds.heartbeat.gain.gain.value *= Math.pow(0.1, dt);
+      }
+    }
+
+    function playDebrisImpact() {
+      playOneShot(eqSounds._impactBuf, 0.5 + Math.random() * 0.5);
+    }
+
+    function stopAllAudio() {
+      if (!eqAudioCtx) return;
+      if (eqSounds.rumble)     eqSounds.rumble.gain.gain.value = 0;
+      if (eqSounds.heartbeat)  eqSounds.heartbeat.gain.gain.value = 0;
+    }
+
     // ── Crouch ──────────────────────────────────────────────────
     const EYE_STAND = 1.7;
     const EYE_CROUCH = 0.75;
@@ -606,7 +762,12 @@
       if (pm) pm.style.display = isPaused ? "flex" : "none";
     }
 
-    canvas.addEventListener("click",()=>{ if(gameState!==STATE.DONE && !isPaused) canvas.requestPointerLock(); });
+    canvas.addEventListener("click",()=>{
+      if(gameState!==STATE.DONE && !isPaused) canvas.requestPointerLock();
+      // Init audio on first user interaction (browser autoplay policy)
+      if(!eqAudioCtx) { initAudio(); }
+      resumeAudio();
+    });
 
     document.addEventListener("pointerlockchange",()=>{
       isLocked=document.pointerLockElement===canvas;
@@ -760,7 +921,7 @@
             flashScreen("rgba(220,30,30,0.4)",350);
           }
         }
-        if(d.position.y<=0.1){ d.position.y=0.1; d._fallen=true; }
+        if(d.position.y<=0.1){ d.position.y=0.1; if(!d._fallen) playDebrisImpact(); d._fallen=true; }
       }
     }
 
@@ -919,6 +1080,7 @@
 
     function showOutcome(){
       gameState=STATE.DONE; document.exitPointerLock();
+      stopAllAudio();
       const hint=document.getElementById("game-hint");
       if(hint) hint.style.display="none";
       let title,body,panicResult,accent;
@@ -1000,6 +1162,8 @@
           flashScreen("rgba(255,200,40,0.55)",500);
         }
       }
+
+      updateAudio(dt);
 
       if(gameState===STATE.QUAKE){
         quakeTimer+=dt;

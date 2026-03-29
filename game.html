@@ -557,102 +557,199 @@
             transition: all 0.2s ease;
         }
         .menu-btn:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
+
+        /* ── Mobile controls ───────────────────────────────── */
+        #mobile-controls {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: 110px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px 14px;
+            z-index: 300;
+            pointer-events: none;
+            background: linear-gradient(to top, rgba(0,0,0,0.55), transparent);
+        }
+
+        .joystick-zone {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.12);
+            border: 2px solid rgba(255,255,255,0.35);
+            position: relative;
+            pointer-events: all;
+            touch-action: none;
+            flex-shrink: 0;
+        }
+
+        .joystick-label {
+            position: absolute;
+            bottom: -16px; left: 50%; transform: translateX(-50%);
+            font-family: var(--font-mono);
+            font-size: 0.45rem; letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.35);
+            text-transform: uppercase; white-space: nowrap;
+        }
+
+        .joystick-knob {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.4);
+            border: 2px solid rgba(255,255,255,0.65);
+            box-shadow: 0 0 10px rgba(255,255,255,0.2);
+            transition: background 0.1s;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            pointer-events: all;
+            align-items: center;
+        }
+
+        .action-btn-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .action-btn-wrap span {
+            font-family: var(--font-mono);
+            font-size: 0.42rem;
+            letter-spacing: 0.08em;
+            color: rgba(255,255,255,0.35);
+            text-transform: uppercase;
+        }
+
+        .action-buttons button {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.4);
+            font-size: 1rem;
+            cursor: pointer;
+            touch-action: none;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            transition: background 0.1s, transform 0.1s;
+        }
+
+        .action-buttons button:active {
+            background: rgba(255,255,255,0.35);
+            transform: scale(0.9);
+        }
+
+        /* ── Portrait warning (phones only) ───────────────── */
+        #rotate-warning {
+            display: none;
+            position: fixed; inset: 0; z-index: 10000;
+            background: #09090b;
+            flex-direction: column; align-items: center; justify-content: center;
+            gap: 1.2rem; text-align: center; padding: 2rem;
+        }
+        #rotate-warning svg { animation: rotateHint 1.8s ease-in-out infinite; }
+        @keyframes rotateHint {
+            0%,100% { transform: rotate(0deg); }
+            50%      { transform: rotate(90deg); }
+        }
+        @media (orientation: portrait) and (max-width: 900px) {
+            #rotate-warning { display: flex; }
+            #game-wrapper, #main-menu { filter: blur(6px); pointer-events: none; }
+        }
+
+        /* ── Mobile HUD — landscape phones (height ≤ 500px) ── */
+        @media (orientation: landscape) and (max-height: 500px) {
+            #health-wrap, #stamina-wrap, #oxygen-wrap {
+                min-width: 0;
+                width: 200px;
+                padding: 5px 10px 6px 10px;
+                gap: 3px;
+                border-left-width: 2px;
+                border-radius: 0 6px 6px 0;
+                left: 8px;
+            }
+            #health-wrap  { top: 6px;  width: 220px; padding: 6px 10px 7px 10px; }
+            #stamina-wrap { top: 62px; }
+            #oxygen-wrap  { top: 112px; }
+
+            #health-bar   { width: 100%; height: 14px; }
+            #stamina-bar, #oxygen-bar { width: 100%; height: 10px; }
+
+            #health-label  { font-size: 0.52rem !important; letter-spacing: 0.12em !important; }
+            #stamina-label, #oxygen-label { font-size: 0.48rem; letter-spacing: 0.1em; }
+
+            #panic-wrap {
+                padding: 4px 12px 5px;
+                border-radius: 6px 6px 0 0;
+            }
+            #panic-bar  { width: 22vw; height: 9px; }
+            #panic-label { font-size: 0.48rem; letter-spacing: 0.1em; }
+
+            #game-timer {
+                font-size: 1.6rem;
+                padding: 4px 14px 3px;
+                border-radius: 6px 6px 0 0;
+                border-bottom-width: 2px;
+                top: 6px; right: 10px;
+            }
+
+            #game-status {
+                font-size: clamp(0.7rem, 2vw, 0.95rem);
+                padding: 8px 16px;
+                border-radius: 8px;
+                max-width: 50%;
+                bottom: 118px;
+            }
+            #game-status.urgent {
+                bottom: 124px;
+                font-size: clamp(0.8rem, 2.2vw, 1rem);
+            }
+
+            #crouch-indicator {
+                font-size: 0.65rem;
+                padding: 4px 12px;
+                bottom: 118px;
+                letter-spacing: 0.1em;
+            }
+
+            #safe-label {
+                font-size: 0.9rem;
+                padding: 7px 18px;
+                letter-spacing: 0.08em;
+                transform: translate(-50%, -70px);
+                border-top-width: 2px;
+            }
+        }
+
+        /* Back-to-home button in game — bigger for mobile */
+        .back-home-btn {
+            display: inline-block;
+            padding: 14px 32px;
+            font-family: var(--font-cond);
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
     </style>
 </head>
-<script>
-(function() {
-    // Detect mobile device
-    const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    if (!isMobile) return;
-
-    // Turn on mobile touch controls
-    document.getElementById('mobile-controls').style.display = 'flex';
-
-    // Optional: hide desktop-specific hints if you have them
-    const hint = document.getElementById('game-hint');
-    if(hint) hint.style.display = 'none';
-
-    // Helper: Fake keyboard inputs for your existing game logic
-    function triggerKey(key, isDown) {
-        const event = new KeyboardEvent(isDown ? 'keydown' : 'keyup', { code: key, key: key });
-        window.dispatchEvent(event);
-        document.dispatchEvent(event);
-    }
-
-    // Map Action Buttons
-    const btnMap = { 'btn-sprint': 'ShiftLeft', 'btn-crouch': 'KeyC', 'btn-interact': 'KeyE' };
-    for (let id in btnMap) {
-        const btn = document.getElementById(id);
-        if(!btn) continue;
-        btn.addEventListener('touchstart', (e) => { e.preventDefault(); triggerKey(btnMap[id], true); });
-        btn.addEventListener('touchend', (e) => { e.preventDefault(); triggerKey(btnMap[id], false); });
-    }
-
-    // Joystick Setup Engine
-    function setupJoystick(zoneId, callback) {
-        const zone = document.getElementById(zoneId);
-        if(!zone) return;
-        const knob = zone.querySelector('.joystick-knob');
-        const radius = 50; 
-        let center = { x: 0, y: 0 };
-
-        zone.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            const rect = zone.getBoundingClientRect();
-            center = { x: rect.left + radius + 10, y: rect.top + radius + 10 };
-            handleTouch(e.touches[0]);
-        });
-        zone.addEventListener('touchmove', (e) => { e.preventDefault(); handleTouch(e.touches[0]); });
-        zone.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            knob.style.transform = `translate(-50%, -50%)`;
-            callback(0, 0); 
-        });
-
-        function handleTouch(touch) {
-            let dx = touch.clientX - center.x;
-            let dy = touch.clientY - center.y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist > radius) { dx = (dx/dist)*radius; dy = (dy/dist)*radius; }
-            knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-            callback(dx / radius, dy / radius); 
-        }
-    }
-
-    // Left Joystick -> WASD
-    let activeKeys = new Set();
-    setupJoystick('joystick-move', (x, y) => {
-        const threshold = 0.3;
-        const newKeys = new Set();
-        if (y < -threshold) newKeys.add('KeyW');
-        if (y > threshold) newKeys.add('KeyS');
-        if (x < -threshold) newKeys.add('KeyA');
-        if (x > threshold) newKeys.add('KeyD');
-
-        activeKeys.forEach(k => { if(!newKeys.has(k)) triggerKey(k, false); });
-        newKeys.forEach(k => { if(!activeKeys.has(k)) triggerKey(k, true); });
-        activeKeys = newKeys;
-    });
-
-    // Right Joystick -> Camera Look
-    let lookLoop;
-    let lookVec = {x: 0, y: 0};
-    setupJoystick('joystick-look', (nx, ny) => {
-        lookVec = {x: nx, y: ny};
-        if (nx === 0 && ny === 0) { cancelAnimationFrame(lookLoop); lookLoop = null; } 
-        else if (!lookLoop) loopLook();
-    });
-
-    function loopLook() {
-        if (lookVec.x !== 0 || lookVec.y !== 0) {
-            const event = new CustomEvent('mobilelook', { detail: { movementX: lookVec.x * 6, movementY: lookVec.y * 6 } });
-            document.dispatchEvent(event);
-        }
-        lookLoop = requestAnimationFrame(loopLook);
-    }
-})();
-</script>
 <body>
+
+    <!-- Rotate warning -->
+    <div id="rotate-warning">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="2" width="14" height="20" rx="2"/>
+            <path d="M12 18h.01"/>
+        </svg>
+        <p style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#fff;">Rotate Your Device</p>
+        <p style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:0.15em;color:#52525b;text-transform:uppercase;">Landscape mode required</p>
+    </div>
 
     <!-- ═══════════════════════════════════════════════════════
          MAIN MENU
@@ -724,18 +821,29 @@
     <div id="game-wrapper">
         <canvas id="game-canvas"></canvas>
         <div id="mobile-controls" style="display: none;">
-    <div id="joystick-move" class="joystick-zone">
-        <div class="joystick-knob"></div>
-    </div>
-    <div class="action-buttons">
-        <button id="btn-sprint">🏃</button>
-        <button id="btn-crouch">🧎</button>
-        <button id="btn-interact">🖐</button>
-    </div>
-    <div id="joystick-look" class="joystick-zone">
-        <div class="joystick-knob"></div>
-    </div>
-</div>
+            <div id="joystick-move" class="joystick-zone">
+                <div class="joystick-knob"></div>
+                <span class="joystick-label">Move</span>
+            </div>
+            <div class="action-buttons">
+                <div class="action-btn-wrap">
+                    <button id="btn-sprint">🏃</button>
+                    <span>Sprint</span>
+                </div>
+                <div class="action-btn-wrap">
+                    <button id="btn-crouch">🧎</button>
+                    <span>Crouch</span>
+                </div>
+                <div class="action-btn-wrap">
+                    <button id="btn-interact">🖐</button>
+                    <span>Use</span>
+                </div>
+            </div>
+            <div id="joystick-look" class="joystick-zone">
+                <div class="joystick-knob"></div>
+                <span class="joystick-label">Look</span>
+            </div>
+        </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════
@@ -760,6 +868,102 @@
         function backToMenu() {
             location.reload();
         }
+    </script>
+
+    <!-- Mobile controls init (runs after DOM is ready) -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        if (!isMobile) return;
+
+        const mobileControls = document.getElementById('mobile-controls');
+        if (mobileControls) mobileControls.style.display = 'flex';
+
+        function triggerKey(key, isDown) {
+            const evt = new KeyboardEvent(isDown ? 'keydown' : 'keyup', { code: key, key: key, bubbles: true });
+            window.dispatchEvent(evt);
+            document.dispatchEvent(evt);
+        }
+
+        const btnMap = { 'btn-sprint': 'ShiftLeft', 'btn-crouch': 'KeyC', 'btn-interact': 'KeyE' };
+        for (const id in btnMap) {
+            const btn = document.getElementById(id);
+            if (!btn) continue;
+            btn.addEventListener('touchstart', function(e) { e.preventDefault(); triggerKey(btnMap[id], true); });
+            btn.addEventListener('touchend',   function(e) { e.preventDefault(); triggerKey(btnMap[id], false); });
+        }
+
+        function setupJoystick(zoneId, callback) {
+            const zone = document.getElementById(zoneId);
+            if (!zone) return;
+            const knob = zone.querySelector('.joystick-knob');
+            const radius = 50;
+            let center = { x: 0, y: 0 };
+
+            zone.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                const rect = zone.getBoundingClientRect();
+                center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+                handleTouch(e.touches[0]);
+            }, { passive: false });
+
+            zone.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+                handleTouch(e.touches[0]);
+            }, { passive: false });
+
+            zone.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                knob.style.transform = 'translate(-50%, -50%)';
+                callback(0, 0);
+            }, { passive: false });
+
+            function handleTouch(touch) {
+                let dx = touch.clientX - center.x;
+                let dy = touch.clientY - center.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist > radius) { dx = (dx / dist) * radius; dy = (dy / dist) * radius; }
+                knob.style.transform = 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px))';
+                callback(dx / radius, dy / radius);
+            }
+        }
+
+        let activeKeys = new Set();
+        setupJoystick('joystick-move', function(x, y) {
+            const t = 0.3;
+            const newKeys = new Set();
+            if (y < -t) newKeys.add('KeyW');
+            if (y > t)  newKeys.add('KeyS');
+            if (x < -t) newKeys.add('KeyA');
+            if (x > t)  newKeys.add('KeyD');
+            activeKeys.forEach(function(k) { if (!newKeys.has(k)) triggerKey(k, false); });
+            newKeys.forEach(function(k)    { if (!activeKeys.has(k)) triggerKey(k, true); });
+            activeKeys = newKeys;
+        });
+
+        let lookLoop = null;
+        let lookVec = { x: 0, y: 0 };
+        setupJoystick('joystick-look', function(nx, ny) {
+            lookVec = { x: nx, y: ny };
+            if (nx === 0 && ny === 0) {
+                if (lookLoop) { cancelAnimationFrame(lookLoop); lookLoop = null; }
+            } else if (!lookLoop) {
+                (function loop() {
+                    if (lookVec.x !== 0 || lookVec.y !== 0) {
+                        document.dispatchEvent(new CustomEvent('mobilelook', {
+                            detail: { movementX: lookVec.x * 7, movementY: lookVec.y * 7 }
+                        }));
+                    }
+                    lookLoop = requestAnimationFrame(loop);
+                })();
+            }
+        });
+
+        // Prevent default touch scroll on game canvas
+        document.getElementById('game-canvas').addEventListener('touchstart', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+    });
     </script>
 
     <!-- Earthquake scenario: src/js/earthquake.js (was game.js) -->

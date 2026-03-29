@@ -63,6 +63,34 @@
             0%   { transform: translateY(-100%); }
             100% { transform: translateY(100%); }
         }
+
+        /* ── Entrance animations ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(28px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+        @keyframes titleReveal {
+            0%   { opacity: 0; filter: blur(10px); transform: translateY(18px) scale(0.97); }
+            50%  { opacity: 1; filter: blur(1px);  transform: translateY(-2px) scale(1.01); }
+            70%  { filter: blur(0); transform: translateY(1px) scale(1); }
+            100% { opacity: 1; filter: blur(0);    transform: translateY(0)    scale(1); }
+        }
+
+        .animate-entrance-nav   { animation: fadeIn      0.5s 0s    ease both; }
+        .animate-entrance-badge { animation: fadeUp      0.5s 0.15s ease both; }
+        .animate-entrance-title { animation: titleReveal 0.9s 0.3s  ease both; }
+        .animate-entrance-para  { animation: fadeUp      0.6s 0.65s ease both; }
+        .animate-entrance-btns  { animation: fadeUp      0.5s 0.95s ease both; }
+        .animate-entrance-hud   { animation: fadeUp      0.7s 0.45s ease both; }
+        .animate-entrance-ticker{ animation: fadeIn      0.6s 1.1s  ease both; }
+
+        /* Sections start hidden and animate on scroll */
+        .scroll-reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s ease; }
+        .scroll-reveal.revealed { opacity: 1; transform: translateY(0); }
     </style>
 </head>
 <body class="text-zinc-200 antialiased selection:bg-amber-500 selection:text-zinc-950 relative overflow-x-hidden">
@@ -80,7 +108,7 @@
     </div>
 
     <!-- Nav -->
-    <nav class="flex justify-between items-center p-6 border-b border-zinc-800/50 backdrop-blur-xl sticky top-0 z-40 bg-zinc-950/80">
+    <nav class="flex justify-between items-center p-6 border-b border-zinc-800/50 backdrop-blur-xl sticky top-0 z-40 bg-zinc-950/80 animate-entrance-nav">
         <div class="flex items-center gap-4">
             <div class="w-12 h-12 border-2 border-amber-500 rounded flex items-center justify-center text-amber-500 font-black text-2xl shadow-[0_0_20px_rgba(245,158,11,0.2)]">
                 C
@@ -91,9 +119,9 @@
             </div>
         </div>
         <div class="hidden md:flex items-center gap-4">
-            <a href="quiz.html" class="font-mono text-sm text-zinc-400 hover:text-amber-500 transition-colors">[ QUIZ ]</a>
-            <a href="database.html" class="font-mono text-sm text-zinc-400 hover:text-amber-500 transition-colors">[ DATABASE ]</a>
-            <a href="game.html" class="font-mono text-sm border border-amber-500 px-6 py-2 text-amber-500 hover:bg-amber-500 hover:text-zinc-950 transition-all duration-300">
+            <a href="quiz.html" class="font-mono text-base text-zinc-400 hover:text-amber-500 transition-colors">[ QUIZ ]</a>
+            <a href="database.html" class="font-mono text-base text-zinc-400 hover:text-amber-500 transition-colors">[ DATABASE ]</a>
+            <a href="game.html" class="font-mono text-base border border-amber-500 px-6 py-2 text-amber-500 hover:bg-amber-500 hover:text-zinc-950 transition-all duration-300">
                 [ RUN SIMULATION ]
             </a>
         </div>
@@ -111,20 +139,20 @@
                 <div class="absolute -top-6 -left-6 text-zinc-700 font-mono text-sm">+</div>
                 <div class="absolute -bottom-6 -right-6 text-zinc-700 font-mono text-sm">+</div>
 
-                <div class="inline-flex items-center gap-2 px-3 py-1 border border-zinc-700 text-zinc-400 text-xs font-mono uppercase tracking-widest mb-6 bg-zinc-900/50 backdrop-blur-sm">
+                <div class="inline-flex items-center gap-2 px-3 py-1 border border-zinc-700 text-zinc-400 text-sm font-mono uppercase tracking-widest mb-6 bg-zinc-900/50 backdrop-blur-sm animate-entrance-badge">
                     <span class="w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
                     Emergency Broadcast
                 </div>
 
-                <h1 class="text-6xl md:text-8xl font-black uppercase tracking-tighter mb-6 leading-[0.9] text-white">
+                <h1 class="text-6xl md:text-8xl font-black uppercase tracking-tighter mb-6 leading-[0.9] text-white animate-entrance-title">
                     Your Choices <br/> Decide <span class="text-amber-500">Survival.</span>
                 </h1>
 
-                <p class="text-lg md:text-xl text-zinc-400 mb-10 max-w-lg font-light leading-relaxed border-l-2 border-zinc-800 pl-6">
+                <p class="text-xl md:text-2xl text-zinc-400 mb-10 max-w-lg font-light leading-relaxed border-l-2 border-zinc-800 pl-6 animate-entrance-para">
                     Enter a real disaster scenario. Every decision updates your health, stamina, oxygen, and panic in real time. One wrong call can kill you. The goal is to learn before it matters.
                 </p>
 
-                <div class="flex flex-col sm:flex-row flex-wrap gap-4">
+                <div class="flex flex-col sm:flex-row flex-wrap gap-4 animate-entrance-btns">
                     <a href="game.html" class="inline-block group relative px-8 py-4 bg-amber-500 text-zinc-950 font-bold font-mono uppercase tracking-widest overflow-hidden transition-all hover:bg-amber-400 text-center">
                         <span class="relative z-10 flex items-center justify-center gap-2">
                             Run Simulation
@@ -138,7 +166,7 @@
             </div>
 
             <!-- Right: Live HUD mockup -->
-            <div class="relative w-full bg-zinc-900/80 border border-zinc-700 rounded-lg p-1 shadow-2xl backdrop-blur-sm overflow-hidden group hover:border-zinc-600 transition-colors duration-500">
+            <div class="relative w-full bg-zinc-900/80 border border-zinc-700 rounded-lg p-1 shadow-2xl backdrop-blur-sm overflow-hidden group hover:border-zinc-600 transition-colors duration-500 animate-entrance-hud">
                 <!-- Window chrome -->
                 <div class="bg-zinc-950 flex items-center justify-between px-4 py-3 border-b border-zinc-800">
                     <div class="flex gap-2">
@@ -219,7 +247,7 @@
     </section>
 
     <!-- Ticker -->
-    <div class="w-full bg-zinc-900 border-y border-zinc-800 overflow-hidden py-3">
+    <div class="w-full bg-zinc-900 border-y border-zinc-800 overflow-hidden py-3 animate-entrance-ticker">
         <div class="whitespace-nowrap flex ticker-move font-mono text-xs tracking-widest text-zinc-500 uppercase">
             <span class="mx-8">• EARTHQUAKE SCENARIO LOADED</span>
             <span class="mx-8">• FIRE EVACUATION PROTOCOL READY</span>
@@ -233,7 +261,7 @@
     </div>
 
     <!-- Scenarios -->
-    <section class="py-24 bg-zinc-950 relative">
+    <section class="py-24 bg-zinc-950 relative scroll-reveal">
         <div class="max-w-7xl mx-auto px-6">
             <div class="text-center mb-16">
                 <h2 class="text-3xl md:text-5xl font-black uppercase tracking-tight text-white mb-4">Choose Your <span class="text-amber-500">Scenario</span></h2>
@@ -246,7 +274,7 @@
                     <div class="p-8">
                         <div class="text-red-500 font-mono text-xs mb-4 tracking-widest uppercase">[ Scenario 01 ]</div>
                         <h3 class="text-2xl font-black uppercase text-white mb-3 group-hover:text-red-400 transition-colors">Earthquake</h3>
-                        <p class="text-zinc-400 text-sm leading-relaxed mb-6">Urban structural collapse. Navigate aftershocks, gas leaks, and trapped civilians. Escape the city before secondary collapse.</p>
+                        <p class="text-zinc-400 text-base leading-relaxed mb-6">Urban structural collapse. Navigate aftershocks, gas leaks, and trapped civilians. Escape the city before secondary collapse.</p>
                         <div class="flex flex-wrap gap-2">
                             <span class="px-2 py-1 bg-zinc-800 text-zinc-400 text-xs font-mono">Aftershocks</span>
                             <span class="px-2 py-1 bg-zinc-800 text-zinc-400 text-xs font-mono">Gas Leaks</span>
@@ -260,7 +288,7 @@
                     <div class="p-8">
                         <div class="text-amber-500 font-mono text-xs mb-4 tracking-widest uppercase">[ Scenario 02 ]</div>
                         <h3 class="text-2xl font-black uppercase text-white mb-3 group-hover:text-amber-400 transition-colors">Fire</h3>
-                        <p class="text-zinc-400 text-sm leading-relaxed mb-6">Building evacuation under extreme smoke and heat. Every floor has blocked exits and spreading flames. Oxygen is running out.</p>
+                        <p class="text-zinc-400 text-base leading-relaxed mb-6">Building evacuation under extreme smoke and heat. Every floor has blocked exits and spreading flames. Oxygen is running out.</p>
                         <div class="flex flex-wrap gap-2">
                             <span class="px-2 py-1 bg-zinc-800 text-zinc-400 text-xs font-mono">Smoke Inhalation</span>
                             <span class="px-2 py-1 bg-zinc-800 text-zinc-400 text-xs font-mono">Blocked Exits</span>
@@ -274,7 +302,7 @@
                     <div class="p-8">
                         <div class="text-green-500 font-mono text-xs mb-4 tracking-widest uppercase">[ Scenario 03 ]</div>
                         <h3 class="text-2xl font-black uppercase text-white mb-3 group-hover:text-green-400 transition-colors">Wilderness</h3>
-                        <p class="text-zinc-400 text-sm leading-relaxed mb-6">Stranded in dense forest with no communication. Manage exposure, dehydration, and navigation failure to reach safety.</p>
+                        <p class="text-zinc-400 text-base leading-relaxed mb-6">Stranded in dense forest with no communication. Manage exposure, dehydration, and navigation failure to reach safety.</p>
                         <div class="flex flex-wrap gap-2">
                             <span class="px-2 py-1 bg-zinc-800 text-zinc-400 text-xs font-mono">Exposure</span>
                             <span class="px-2 py-1 bg-zinc-800 text-zinc-400 text-xs font-mono">Dehydration</span>
@@ -287,7 +315,7 @@
     </section>
 
     <!-- Core systems -->
-    <section class="py-24 bg-zinc-950 border-t border-zinc-900 relative">
+    <section class="py-24 bg-zinc-950 border-t border-zinc-900 relative scroll-reveal">
         <div class="max-w-7xl mx-auto px-6">
             <div class="text-center mb-16">
                 <h2 class="text-3xl md:text-5xl font-black uppercase tracking-tight text-white mb-4">How the <span class="text-amber-500">Engine</span> Works</h2>
@@ -298,32 +326,32 @@
                 <div class="group bg-zinc-900/40 border border-zinc-800 p-8 hover:border-amber-500/50 hover:bg-zinc-900 transition-all duration-300">
                     <div class="text-amber-500 font-mono text-xs mb-6 tracking-widest">[ 01 ]</div>
                     <h4 class="text-xl font-bold uppercase mb-4 text-white">Decision Engine</h4>
-                    <p class="text-zinc-400 text-sm font-light leading-relaxed">Every choice cascades. A bad call early compounds into worse options later. Decisions are non-reversible — just like real disasters.</p>
+                    <p class="text-zinc-400 text-base font-light leading-relaxed">Every choice cascades. A bad call early compounds into worse options later. Decisions are non-reversible — just like real disasters.</p>
                 </div>
 
                 <div class="group bg-zinc-900/40 border border-zinc-800 p-8 hover:border-amber-500/50 hover:bg-zinc-900 transition-all duration-300">
                     <div class="text-amber-500 font-mono text-xs mb-6 tracking-widest">[ 02 ]</div>
                     <h4 class="text-xl font-bold uppercase mb-4 text-white">Live Stat Tracking</h4>
-                    <p class="text-zinc-400 text-sm font-light leading-relaxed">Health, stamina, oxygen, and panic update in real time. Let any one drop to zero and the simulation ends. You get a reason why.</p>
+                    <p class="text-zinc-400 text-base font-light leading-relaxed">Health, stamina, oxygen, and panic update in real time. Let any one drop to zero and the simulation ends. You get a reason why.</p>
                 </div>
 
                 <div class="group bg-zinc-900/40 border border-zinc-800 p-8 hover:border-amber-500/50 hover:bg-zinc-900 transition-all duration-300">
                     <div class="text-amber-500 font-mono text-xs mb-6 tracking-widest">[ 03 ]</div>
                     <h4 class="text-xl font-bold uppercase mb-4 text-white">Quiz Checkpoints</h4>
-                    <p class="text-zinc-400 text-sm font-light leading-relaxed">Knowledge prompts fire mid-simulation. Correct answers give stat bonuses. Wrong ones cost you. You learn by paying the price.</p>
+                    <p class="text-zinc-400 text-base font-light leading-relaxed">Knowledge prompts fire mid-simulation. Correct answers give stat bonuses. Wrong ones cost you. You learn by paying the price.</p>
                 </div>
 
                 <div class="group bg-zinc-900/40 border border-zinc-800 p-8 hover:border-amber-500/50 hover:bg-zinc-900 transition-all duration-300">
                     <div class="text-amber-500 font-mono text-xs mb-6 tracking-widest">[ 04 ]</div>
                     <h4 class="text-xl font-bold uppercase mb-4 text-white">Debrief & Score</h4>
-                    <p class="text-zinc-400 text-sm font-light leading-relaxed">End-state summary shows your score, what killed you or saved you, and the optimal path. Session data feeds the global analytics board.</p>
+                    <p class="text-zinc-400 text-base font-light leading-relaxed">End-state summary shows your score, what killed you or saved you, and the optimal path. Session data feeds the global analytics board.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Simulation flow -->
-    <section class="py-32 bg-zinc-950 border-t border-zinc-900 relative overflow-hidden">
+    <section class="py-32 bg-zinc-950 border-t border-zinc-900 relative overflow-hidden scroll-reveal">
         <div class="absolute right-0 top-0 w-1/2 h-full bg-gradient-to-l from-amber-500/5 to-transparent pointer-events-none"></div>
 
         <div class="max-w-7xl mx-auto px-6 relative z-10">
@@ -388,7 +416,7 @@
     </section>
 
     <!-- Analytics callout -->
-    <section class="py-24 bg-zinc-900 border-t border-zinc-800 relative overflow-hidden">
+    <section class="py-24 bg-zinc-900 border-t border-zinc-800 relative overflow-hidden scroll-reveal">
         <div class="absolute inset-0 opacity-[0.03]" style="background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px); background-size: 40px 40px;"></div>
         <div class="absolute left-0 top-0 w-1/3 h-full bg-gradient-to-r from-amber-500/5 to-transparent pointer-events-none"></div>
 
@@ -402,7 +430,7 @@
                     <h2 class="text-3xl md:text-5xl font-black uppercase tracking-tight text-white mb-4">
                         Global <span class="text-amber-500">Analytics</span>
                     </h2>
-                    <p class="text-zinc-400 font-light leading-relaxed max-w-lg text-lg">
+                    <p class="text-zinc-400 font-light leading-relaxed max-w-lg text-xl">
                         Every session feeds the dashboard. See which scenarios kill the most players, where panic spikes, and what decisions separate survivors from casualties.
                     </p>
                 </div>
@@ -473,6 +501,24 @@
     </footer>
 
     <script src="src/js/main.js"></script>
+
+    <script>
+    // Scroll reveal for sections
+    (function() {
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.08 });
+
+        document.querySelectorAll('.scroll-reveal').forEach(function(el) {
+            observer.observe(el);
+        });
+    })();
+    </script>
 
     <script>
     (function () {

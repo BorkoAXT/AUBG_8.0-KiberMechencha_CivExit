@@ -1,23 +1,4 @@
 // quiz.js — CivExit Idea Validation Survey
-//
-// Required Supabase table (run in Supabase SQL editor):
-//
-// create table quiz_responses (
-//   id bigint generated always as identity primary key,
-//   age_group text,
-//   panic_response text,
-//   first_item text,
-//   simulation_prepares text,
-//   simulation_effectiveness text,
-//   trusted_ally text,
-//   child_simulation text,
-//   created_at timestamp with time zone default now()
-// );
-//
-// Also enable RLS and add a policy so anon can INSERT and SELECT:
-// alter table quiz_responses enable row level security;
-// create policy "Allow anon insert" on quiz_responses for insert to anon with check (true);
-// create policy "Allow anon select" on quiz_responses for select to anon using (true);
 
 const QUESTIONS = [
     {
@@ -98,6 +79,7 @@ const CHART_LABELS = {
 let currentIndex = 0;
 const answers = {};
 let multiSelected = new Set();
+const multiAnswers = {}; // stores Set of selected indices per question id
 
 // ─── Supabase ─────────────────────────────────────────────────────────────────
 
@@ -107,29 +89,39 @@ const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function render() {
     const q = QUESTIONS[currentIndex];
-    multiSelected = new Set();
+    multiSelected = new Set(multiAnswers[q.id] || []);
 
     const pct = Math.round((currentIndex / QUESTIONS.length) * 100);
     document.getElementById('progress-bar').style.width = `${pct}%`;
     document.getElementById('progress-text').textContent = `${q.number} / ${QUESTIONS.length}`;
 
     const isLast = currentIndex === QUESTIONS.length - 1;
+    const isFirst = currentIndex === 0;
     const nextLabel = isLast ? '[ Submit Survey ]' : '[ Next Question ]';
 
     const header = `
         <div class="mb-6">
-            <span class="text-amber-500 font-mono text-[10px] uppercase tracking-widest">Question ${q.number} of ${QUESTIONS.length}</span>
-            <h2 class="text-lg font-bold text-white mt-2 leading-snug">${q.label}</h2>
-            ${q.subtitle ? `<p class="text-zinc-500 font-mono text-xs mt-1">${q.subtitle}</p>` : ''}
+            <span class="text-amber-500 font-mono text-xs uppercase tracking-widest">Question ${q.number} of ${QUESTIONS.length}</span>
+            <h2 class="text-xl font-bold text-white mt-2 leading-snug">${q.label}</h2>
+            ${q.subtitle ? `<p class="text-zinc-400 font-mono text-sm mt-1">${q.subtitle}</p>` : ''}
         </div>
+    `;
+
+    const prevBtn = isFirst ? '' : `
+        <button id="prev-btn" onclick="goBack()"
+            class="w-full mt-3 py-3 border border-zinc-700 text-zinc-400 font-mono text-sm uppercase tracking-widest
+                   hover:border-amber-500 hover:text-amber-500 cursor-pointer transition-all">
+            ← Previous Question
+        </button>
     `;
 
     const nextBtn = `
         <button id="next-btn" onclick="advance()" disabled
-            class="w-full mt-6 py-3 bg-amber-500 text-zinc-950 font-black font-mono text-sm uppercase tracking-widest
+            class="w-full mt-4 py-4 bg-amber-500 text-zinc-950 font-black font-mono text-base uppercase tracking-widest
                    opacity-30 cursor-not-allowed transition-all">
             ${nextLabel}
         </button>
+        ${prevBtn}
     `;
 
     const container = document.getElementById('quiz-container');
@@ -139,20 +131,28 @@ function render() {
             <div class="space-y-3">
                 ${q.options.map((opt, i) => `
                     <button onclick="selectRadio(${i})" data-index="${i}"
-                        class="option-btn w-full text-left p-4 border border-zinc-700 font-mono text-sm text-zinc-300
+                        class="option-btn w-full text-left p-4 border border-zinc-700 font-mono text-base text-zinc-300
                                hover:border-amber-500 hover:bg-amber-500/10 transition-all">
-                        <span class="text-amber-500/50 mr-3 text-xs">${String.fromCharCode(65 + i)})</span>${opt}
+                        <span class="text-amber-500/50 mr-3 text-sm">${String.fromCharCode(65 + i)})</span>${opt}
                     </button>
                 `).join('')}
             </div>
             ${nextBtn}
         `;
+        // Restore previous selection if going back
+        if (answers[q.id]) {
+            const idx = q.options.indexOf(answers[q.id]);
+            if (idx >= 0) {
+                document.querySelectorAll('.option-btn')[idx].classList.add('selected');
+                setNextEnabled(true);
+            }
+        }
     } else if (q.type === 'multi') {
         container.innerHTML = header + `
             <div class="space-y-3">
                 ${q.options.map((opt, i) => `
                     <button onclick="toggleMulti(${i})" data-index="${i}"
-                        class="multi-btn w-full text-left p-4 border border-zinc-700 font-mono text-sm text-zinc-300
+                        class="multi-btn w-full text-left p-4 border border-zinc-700 font-mono text-base text-zinc-300
                                hover:border-amber-500 transition-all flex items-start gap-3">
                         <span id="check-${i}" class="w-4 h-4 border border-zinc-600 flex-shrink-0 mt-0.5 flex items-center justify-center text-[10px]"></span>
                         <span>${opt}</span>
@@ -161,14 +161,29 @@ function render() {
             </div>
             ${nextBtn}
         `;
+        // Restore previous multi selection
+        if (multiSelected.size > 0) {
+            multiSelected.forEach(i => {
+                const btn = document.querySelectorAll('.multi-btn')[i];
+                if (btn) btn.classList.add('selected');
+                const box = document.getElementById(`check-${i}`);
+                if (box) {
+                    box.innerHTML = '✓';
+                    box.classList.add('bg-amber-500', 'border-amber-500', 'text-zinc-950');
+                    box.classList.remove('border-zinc-600');
+                }
+            });
+            setNextEnabled(true);
+        }
     } else if (q.type === 'text') {
         container.innerHTML = header + `
             <textarea id="text-answer" rows="3" placeholder="${q.placeholder}"
-                class="w-full bg-zinc-950 border border-zinc-700 text-zinc-200 font-mono text-sm p-4 resize-none
+                class="w-full bg-zinc-950 border border-zinc-700 text-zinc-200 font-mono text-base p-4 resize-none
                        focus:outline-none focus:border-amber-500 transition-colors placeholder-zinc-600"
-                oninput="onTextInput()"></textarea>
+                oninput="onTextInput()">${answers[q.id] || ''}</textarea>
             ${nextBtn}
         `;
+        if (answers[q.id]) setNextEnabled(true);
     }
 }
 
@@ -203,6 +218,7 @@ function toggleMulti(index) {
         box.classList.remove('border-zinc-600');
     }
 
+    multiAnswers[q.id] = new Set(multiSelected);
     answers[q.id] = Array.from(multiSelected).map(i => q.options[i]).join(' | ');
     setNextEnabled(multiSelected.size > 0);
 };
@@ -224,10 +240,12 @@ function setNextEnabled(enabled) {
 }
 
 function advance() {
-    // Capture text answer on advance
     if (QUESTIONS[currentIndex].type === 'text') {
         const val = document.getElementById('text-answer')?.value?.trim();
         if (val) answers[QUESTIONS[currentIndex].id] = val;
+    }
+    if (QUESTIONS[currentIndex].type === 'multi') {
+        multiAnswers[QUESTIONS[currentIndex].id] = new Set(multiSelected);
     }
 
     currentIndex++;
@@ -239,12 +257,69 @@ function advance() {
     }
 };
 
+function goBack() {
+    if (currentIndex <= 0) return;
+    // Save current text answer before going back
+    if (QUESTIONS[currentIndex].type === 'text') {
+        const val = document.getElementById('text-answer')?.value?.trim();
+        if (val) answers[QUESTIONS[currentIndex].id] = val;
+    }
+    if (QUESTIONS[currentIndex].type === 'multi') {
+        multiAnswers[QUESTIONS[currentIndex].id] = new Set(multiSelected);
+    }
+    currentIndex--;
+    render();
+}
+
+// ─── Preparedness calculation ─────────────────────────────────────────────────
+
+function calculatePreparedness() {
+    const responses = answers.panic_response || '';
+
+    let score = 50; // default neutral
+    if (responses.includes('I keep my composure and act immediately')) score += 40;
+    if (responses.includes("I try to stay calm, but don't always make the right choice")) score += 15;
+    if (responses.includes("I can't make decisions under pressure")) score -= 20;
+    if (responses.includes("I panic easily and don't know what to do")) score -= 30;
+
+    if (answers.simulation_prepares === 'Yes') score += 5;
+    if (answers.simulation_effectiveness === 'Very effective') score += 5;
+    if (answers.simulation_effectiveness === 'Somewhat effective') score += 2;
+
+    score = Math.max(5, Math.min(100, score));
+
+    let label, desc, color, emoji;
+    if (score >= 80) {
+        label = 'HIGHLY PREPARED';
+        desc = "You have strong crisis instincts and composure under pressure. You'd be an asset in an emergency — keep training.";
+        color = '#4ade80';
+        emoji = '🟢';
+    } else if (score >= 55) {
+        label = 'MODERATELY PREPARED';
+        desc = "You have solid instincts but room to build mental resilience. Practice helps — consider simulation drills.";
+        color = '#fbbf24';
+        emoji = '🟡';
+    } else if (score >= 30) {
+        label = 'NEEDS TRAINING';
+        desc = "Panic can be your biggest enemy. Regular emergency simulations will sharpen your decision-making under pressure.";
+        color = '#fb923c';
+        emoji = '🟠';
+    } else {
+        label = 'AT RISK';
+        desc = "Acknowledging your limits is the first step. Emergency training and simulation practice are strongly recommended.";
+        color = '#ef4444';
+        emoji = '🔴';
+    }
+
+    return { score, label, desc, color, emoji };
+}
+
 // ─── Submit ───────────────────────────────────────────────────────────────────
 
 async function submitAndShowResults() {
     // Show submitting state
     document.getElementById('progress-area').innerHTML = `
-        <div class="flex items-center gap-3 font-mono text-xs text-amber-500 uppercase tracking-widest animate-pulse">
+        <div class="flex items-center gap-3 font-mono text-sm text-amber-500 uppercase tracking-widest animate-pulse">
             <span class="w-2 h-2 bg-amber-500 rounded-full"></span>
             Transmitting to secure database...
         </div>
@@ -273,30 +348,130 @@ async function submitAndShowResults() {
         console.error('Submit error:', e);
     }
 
-    // Show success card
+    // Calculate preparedness
+    const prep = calculatePreparedness();
+
+    // Show preparedness card for 5 seconds
     document.getElementById('quiz-wrapper').innerHTML = `
-        <div class="text-center py-8">
-            <div class="w-14 h-14 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-5">
+        <div class="text-center py-6" id="prep-card">
+            <div class="w-14 h-14 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg class="w-7 h-7 text-zinc-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                 </svg>
             </div>
-            <h2 class="text-2xl font-black uppercase text-white mb-2">Response Logged</h2>
-            <p class="text-zinc-500 font-mono text-xs leading-relaxed max-w-sm mx-auto">
-                Your data has been transmitted to the global survival intelligence database.
-            </p>
-            <p class="text-amber-500 font-mono text-[10px] uppercase tracking-widest mt-5 animate-pulse">
-                [ Loading collective intelligence... ]
-            </p>
+            <p class="font-mono text-xs text-amber-500 uppercase tracking-widest mb-5 animate-pulse">[ Response Logged ]</p>
+
+            <div class="border border-zinc-700 bg-zinc-950/60 p-6 mb-6 text-left" style="border-left: 4px solid ${prep.color};">
+                <p class="font-mono text-xs text-zinc-500 uppercase tracking-widest mb-2">Your Crisis Preparedness</p>
+                <div class="flex items-center gap-3 mb-3">
+                    <span style="color: ${prep.color};" class="font-black text-2xl tracking-tight">${prep.label}</span>
+                </div>
+                <div class="w-full h-3 bg-zinc-800 rounded-full overflow-hidden mb-3">
+                    <div class="h-full rounded-full transition-all duration-1000" style="width: ${prep.score}%; background: ${prep.color};"></div>
+                </div>
+                <p class="text-zinc-400 font-mono text-sm leading-relaxed">${prep.desc}</p>
+            </div>
+
+            <p class="text-zinc-500 font-mono text-xs mb-3">Loading collective intelligence in <span id="prep-countdown">5</span>s...</p>
+            <div class="w-full h-[2px] bg-zinc-800 overflow-hidden">
+                <div id="prep-timer-bar" class="h-full bg-amber-500 transition-none" style="width: 100%"></div>
+            </div>
         </div>
     `;
 
-    // Load charts, then reveal results phase
-    await loadAndRenderCharts();
+    // Animate the score bar in
+    setTimeout(() => {
+        const bar = document.querySelector('#prep-card .h-3 div');
+        if (bar) bar.style.width = prep.score + '%';
+    }, 100);
 
+    // Countdown
+    await new Promise(resolve => {
+        let remaining = 5;
+        const countEl = document.getElementById('prep-countdown');
+        const timerBar = document.getElementById('prep-timer-bar');
+        if (timerBar) {
+            timerBar.style.transition = 'width 5s linear';
+            setTimeout(() => { timerBar.style.width = '0%'; }, 50);
+        }
+        const tick = setInterval(() => {
+            remaining--;
+            if (countEl) countEl.textContent = remaining;
+            if (remaining <= 0) {
+                clearInterval(tick);
+                resolve();
+            }
+        }, 1000);
+    });
+
+    // Load charts in background
+    const chartsPromise = loadAndRenderCharts();
+
+    // Show analytics entrance for 5 seconds
     document.getElementById('quiz-phase').classList.add('hidden');
-    document.getElementById('results-phase').classList.remove('hidden');
+    const resultsPhase = document.getElementById('results-phase');
+    resultsPhase.classList.remove('hidden');
+    resultsPhase.style.opacity = '0';
+    resultsPhase.style.transform = 'translateY(24px)';
+    resultsPhase.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Show analytics entrance overlay
+    const existingOverlay = document.getElementById('analytics-entrance');
+    if (existingOverlay) existingOverlay.remove();
+
+    const entranceOverlay = document.createElement('div');
+    entranceOverlay.id = 'analytics-entrance';
+    entranceOverlay.innerHTML = `
+        <div style="
+            position: fixed; inset: 0; z-index: 9999;
+            background: #09090b;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 1.5rem;
+        ">
+            <p style="font-family: 'Space Mono', monospace; font-size: 0.7rem; letter-spacing: 0.3em; color: #f59e0b; text-transform: uppercase;">
+                // Syncing Global Intelligence //
+            </p>
+            <p style="font-family: 'Outfit', sans-serif; font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: -0.02em; text-align: center;">
+                Collective Survival Data
+            </p>
+            <div style="width: 280px; height: 2px; background: #27272a; overflow: hidden;">
+                <div id="entrance-bar" style="height: 100%; background: #f59e0b; width: 0%; transition: width 4.5s cubic-bezier(0.4,0,0.2,1);"></div>
+            </div>
+            <p id="entrance-countdown" style="font-family: 'Space Mono', monospace; font-size: 0.7rem; letter-spacing: 0.2em; color: #52525b; text-transform: uppercase;">
+                Loading charts... 5s
+            </p>
+        </div>
+    `;
+    document.body.appendChild(entranceOverlay);
+    setTimeout(() => {
+        const bar = document.getElementById('entrance-bar');
+        if (bar) bar.style.width = '100%';
+    }, 50);
+
+    await new Promise(resolve => {
+        let t = 5;
+        const countEl = document.getElementById('entrance-countdown');
+        const tick = setInterval(() => {
+            t--;
+            if (countEl) countEl.textContent = `Loading charts... ${t}s`;
+            if (t <= 0) { clearInterval(tick); resolve(); }
+        }, 1000);
+    });
+
+    await chartsPromise;
+
+    // Fade out entrance overlay
+    entranceOverlay.style.transition = 'opacity 0.6s ease';
+    entranceOverlay.style.opacity = '0';
+    setTimeout(() => entranceOverlay.remove(), 700);
+
+    // Fade in results
+    setTimeout(() => {
+        resultsPhase.style.opacity = '1';
+        resultsPhase.style.transform = 'translateY(0)';
+    }, 100);
 }
 
 // ─── Charts ───────────────────────────────────────────────────────────────────
@@ -349,7 +524,7 @@ async function loadAndRenderCharts() {
         card.className = 'bg-zinc-900/50 border border-zinc-800 p-5 hover:border-amber-500/30 transition-all';
 
         card.innerHTML = `
-            <h3 class="font-mono text-[10px] text-amber-500 uppercase tracking-[0.2em] mb-4 border-b border-zinc-800 pb-2 flex justify-between">
+            <h3 class="font-mono text-xs text-amber-500 uppercase tracking-[0.2em] mb-4 border-b border-zinc-800 pb-2 flex justify-between">
                 <span>${CHART_LABELS[q.id]}</span>
                 <span class="text-zinc-600">Q${q.number}</span>
             </h3>
@@ -358,7 +533,7 @@ async function loadAndRenderCharts() {
             </div>
             <ul class="mt-5 space-y-1.5">
                 ${top10.map(([label, count], i) => `
-                    <li class="flex justify-between items-center font-mono text-[10px]">
+                    <li class="flex justify-between items-center font-mono text-xs">
                         <span class="flex items-center gap-2 min-w-0">
                             <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${CHART_COLORS[i % CHART_COLORS.length]}"></span>
                             <span class="text-zinc-400 truncate" title="${label}">${label}</span>
