@@ -437,7 +437,7 @@
     isOpen: false,
     openAngle: 0,
     axis: 'z',
-    interactRadius: 1.6,
+    interactRadius: 2.8,
     leadsTo: 'kitchen',
     colliderIndex: -1,
   });
@@ -470,7 +470,7 @@
     isOpen: false,
     openAngle: 0,
     axis: 'z',
-    interactRadius: 1.6,
+    interactRadius: 2.8,
     leadsTo: 'bedroom',
     colliderIndex: -1,
   });
@@ -507,7 +507,7 @@
     mesh: utilityDoorMesh,
     parts: utilityDoorParts,
     isHot: false, isOpen: false, openAngle: 0,
-    axis: 'z', interactRadius: 1.6, leadsTo: 'utility', colliderIndex: -1,
+    axis: 'z', interactRadius: 2.8, leadsTo: 'utility', colliderIndex: -1,
   });
   const utilityDoorColliderIdx = colliders.length;
   addCollider(-1.5, 15, 0.15, 1.0);
@@ -534,7 +534,7 @@
     mesh: guestDoorMesh,
     parts: guestDoorParts,
     isHot: false, isOpen: false, openAngle: 0,
-    axis: 'z', interactRadius: 1.6, leadsTo: 'guest', colliderIndex: -1,
+    axis: 'z', interactRadius: 2.8, leadsTo: 'guest', colliderIndex: -1,
   });
   const guestDoorColliderIdx = colliders.length;
   addCollider(1.5, 15, 0.15, 1.0);
@@ -755,7 +755,7 @@
     mesh: bedroomWindowMesh,
     broken: false,
     isEscape: true,
-    interactRadius: 1.6,
+    interactRadius: 2.8,
     normal: new THREE.Vector3(1, 0, 0),
   });
 
@@ -842,7 +842,7 @@
     isOpen: false,
     openAngle: 0,
     axis: 'x',
-    interactRadius: 1.6,
+    interactRadius: 2.8,
     leadsTo: 'bathroom',
     colliderIndex: -1,
   });
@@ -1057,7 +1057,7 @@
     // Check towel pickup
     if (!hasCloth) {
       const dCloth = p.distanceTo(clothPos);
-      if (dCloth < 1.5) {
+      if (dCloth < 3.0) {
         nearCloth = true;
         interactPrompt = 'Press [E] to pick up towel';
         canInteract = true;
@@ -1068,7 +1068,7 @@
     // Check sink (wet the cloth)
     if (hasCloth && !clothIsWet) {
       const dSink = p.distanceTo(sinkPos);
-      if (dSink < 1.5) {
+      if (dSink < 3.0) {
         nearSink = true;
         interactPrompt = 'Press [E] to wet the towel';
         canInteract = true;
@@ -1110,7 +1110,7 @@
     for (const win of windows) {
       if (!win.broken || !win.isEscape) continue;
       const dWin = new THREE.Vector3(p.x, p.y, p.z).distanceTo(win.pos);
-      if (dWin < 1.2) {
+      if (dWin < 2.5) {
         interactPrompt = 'Press [E] to ESCAPE!';
         canInteract = true;
         interactTarget = win;
@@ -1121,7 +1121,7 @@
 
     // Check front door for escape
     const dFront = Math.sqrt(p.x * p.x + Math.pow(p.z + 5, 2));
-    if (dFront < 1.8) {
+    if (dFront < 3.5) {
       interactPrompt = 'Press [E] to ESCAPE through front door!';
       canInteract = true;
       interactType = 'frontDoor';
@@ -1238,6 +1238,13 @@
     euler.x -= e.movementY * 0.004 * mouseSens;
     euler.x = Math.max(-PITCH_MAX, Math.min(PITCH_MAX, euler.x));
     camera.quaternion.setFromEuler(euler);
+  });
+
+  // Mobile Camera Support
+  document.addEventListener('mobilelook', (e) => {
+      camera.rotation.y -= e.detail.movementX * 0.005;
+      camera.rotation.x -= e.detail.movementY * 0.005;
+      camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
   });
 
   const keys = {};
@@ -1550,7 +1557,7 @@
 
     // Interaction prompt
     promptEl = document.createElement("div"); promptEl.id = "interact-prompt";
-    promptEl.style.cssText = `position:absolute;bottom:130px;left:50%;transform:translateX(-50%);font-family:var(--font-cond,'Barlow Condensed',sans-serif);font-size:1.2rem;font-weight:700;letter-spacing:0.06em;color:#fff;background:rgba(0,0,0,0.75);border:2px solid rgba(255,255,255,0.3);padding:10px 24px;border-radius:8px;pointer-events:none;z-index:25;display:none;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,0.9);box-shadow:0 4px 16px rgba(0,0,0,0.4);`;
+    promptEl.style.cssText = `position:absolute;bottom:100px;left:50%;transform:translateX(-50%);font-family:'Barlow Condensed',sans-serif;font-size:1.8rem;font-weight:700;letter-spacing:0.08em;color:#fff;background:rgba(0,0,0,0.82);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.18);border-top:3px solid rgba(255,255,255,0.6);padding:16px 44px 14px;border-radius:12px;pointer-events:none;z-index:25;display:none;text-align:center;text-shadow:0 0 20px rgba(255,255,255,0.3),0 1px 6px rgba(0,0,0,0.95);box-shadow:0 4px 32px rgba(0,0,0,0.6);white-space:nowrap;`;
     wrapper.appendChild(promptEl);
 
     // Crouch indicator
@@ -1558,7 +1565,7 @@
 
     // Item indicator
     const itemEl = document.createElement("div"); itemEl.id = "item-indicator";
-    itemEl.style.cssText = `position:absolute;top:188px;left:20px;font-family:var(--font-cond,'Barlow Condensed',sans-serif);font-size:0.95rem;font-weight:700;letter-spacing:0.08em;color:#e8e0d0;background:rgba(0,0,0,0.65);border:2px solid rgba(255,255,255,0.18);padding:8px 16px;border-radius:6px;pointer-events:none;z-index:20;display:none;text-shadow:0 1px 3px rgba(0,0,0,0.8);box-shadow:0 2px 8px rgba(0,0,0,0.3);`;
+    itemEl.style.cssText = `position:absolute;top:316px;left:0;font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:0.12em;color:#e8e0d0;background:rgba(0,0,0,0.55);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08);border-left:4px solid rgba(255,255,255,0.4);border-radius:0 10px 10px 0;padding:12px 20px 12px 16px;pointer-events:none;z-index:20;display:none;text-shadow:0 1px 6px rgba(0,0,0,0.9);box-shadow:-2px 0 18px rgba(255,255,255,0.06),0 4px 20px rgba(0,0,0,0.5);`;
     wrapper.appendChild(itemEl);
 
     outcomeEl = document.createElement("div"); outcomeEl.id = "outcome-screen"; outcomeEl.style.display = "none"; wrapper.appendChild(outcomeEl);
@@ -1577,9 +1584,11 @@
     panicFill.style.background = `rgb(${Math.round(p * 210)},${Math.round((1 - p) * 170 + 20)},20)`;
 
     // Health
-    const h = health / 100;
     healthFill.style.width = Math.max(0, health) + "%";
-    healthFill.style.background = `rgb(${Math.round((1 - h) * 210)},${Math.round(h * 170 + 20)},20)`;
+    healthFill.classList.toggle('health-warning', health <= 50 && health > 25);
+    healthFill.classList.toggle('health-danger',  health <= 25);
+    const hw = document.getElementById("health-wrap");
+    if (hw) hw.classList.toggle('danger', health <= 25);
 
     // Oxygen
     const o = oxygen / 100;
@@ -1642,6 +1651,7 @@
         ? "Explore the house. Something smells like smoke..."
         : "⚠ There's a strange crackling from the kitchen...";
       statusEl.style.color = rem > 10 ? "#d1c9bb" : "#fbbf24";
+      statusEl.classList.remove('urgent');
     }
 
     if (gameState === STATE.FIRE) {
@@ -1650,15 +1660,19 @@
       if (oxygen < 25 && !clothIsWet) {
         statusEl.textContent = "⚠ YOU CAN'T BREATHE! Find a towel & wet it, or CROUCH LOW!";
         statusEl.style.color = "#ef4444";
+        statusEl.classList.add('urgent');
       } else if (!hasCloth) {
         statusEl.textContent = "Grab the glowing towel in this room! [E]";
         statusEl.style.color = "#fbbf24";
+        statusEl.classList.add('urgent');
       } else if (hasCloth && !clothIsWet) {
         statusEl.textContent = "Wet the towel at the laundry tub — cross the hall into the other room!";
         statusEl.style.color = "#38bdf8";
+        statusEl.classList.add('urgent');
       } else {
         statusEl.textContent = "GET OUT! Use the front door or break a window!";
         statusEl.style.color = "#4ade80";
+        statusEl.classList.add('urgent');
       }
     }
   }
@@ -1738,6 +1752,14 @@
           <div class="outcome-stat">Health: <strong>${Math.max(0, Math.round(health))}%</strong></div>
           <div class="outcome-stat">Panic: <strong>${Math.round(panic)}%</strong></div>
           <div class="outcome-stat">${clothIsWet ? '✓ Wet towel used' : hasCloth ? '⚠ Dry towel only' : '✗ No face protection'}</div>
+        </div>
+        <div class="outcome-tips">
+          <div class="outcome-tips-title">🔥 House Fire Survival Tips</div>
+          <div class="outcome-tip">Cover your nose and mouth with a wet cloth — it filters smoke and buys you time.</div>
+          <div class="outcome-tip">Stay LOW — smoke and toxic gases rise, so crawl to keep your head in cleaner air.</div>
+          <div class="outcome-tip">Always feel a door before opening it. A hot door means fire is on the other side.</div>
+          <div class="outcome-tip">Once outside, NEVER go back in — alert neighbors and call emergency services.</div>
+          <div class="outcome-tip">Know your exits in advance. In a real fire, every second counts.</div>
         </div>
         <button class="outcome-btn" onclick="location.reload()">↩ Try Again</button>
         <button class="menu-btn" onclick="backToMenu()">← Back to Menu</button>

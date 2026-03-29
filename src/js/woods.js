@@ -454,8 +454,8 @@
   b(0.15, 3, 1.5, M.wall, hx + 3, houseTY + 1.5, hz + 2.25);
   b(0.15, 0.8, 3, M.wall, hx + 3, houseTY + 2.6, hz);
   b(6, 0.12, 6, M.woodOld, hx, houseTY - 0.06, hz);
-  b(6.5, 0.15, 3.5, M.roof, hx, houseTY + 3.6, hz - 1.2, 0.3, 0, 0);
-  b(6.5, 0.15, 3.5, M.roof, hx, houseTY + 3.6, hz + 1.2, -0.3, 0, 0);
+  b(6.5, 0.15, 3.5, M.roof, hx, houseTY + 3.6, hz - 1.2, -0.3, 0, 0);
+  b(6.5, 0.15, 3.5, M.roof, hx, houseTY + 3.6, hz + 1.2, 0.3, 0, 0);
   b(5.5, 0.2, 0.2, M.woodOld, hx, houseTY + 1.2, hz + 1, 0, 0, 0.15);
   b(0.8, 0.8, 0.05, new THREE.MeshLambertMaterial({ color: 0x334455, transparent: true, opacity: 0.25 }), hx - 3, houseTY + 1.8, hz);
   addCollider(hx, hz - 3, 3, 0.15);
@@ -524,10 +524,10 @@
     mesh.castShadow = true;
     scene.add(mesh);
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.03, 6, 16), new THREE.MeshBasicMaterial({ color: 0xffaa33 }));
-    ring.position.set(pos.x, ty + 0.8, pos.z);
+    ring.position.set(pos.x, ty + 0.15, pos.z);
     ring.rotation.x = Math.PI / 2;
     scene.add(ring);
-    stickMeshes.push({ mesh, ring, index: i });
+    stickMeshes.push({ mesh, ring, index: i, baseY: ty });
   });
 
   rockPositions.forEach((pos, i) => {
@@ -537,10 +537,10 @@
     mesh.castShadow = true;
     scene.add(mesh);
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.03, 6, 16), new THREE.MeshBasicMaterial({ color: 0x88aaff }));
-    ring.position.set(pos.x, ty + 0.4, pos.z);
+    ring.position.set(pos.x, ty + 0.12, pos.z);
     ring.rotation.x = Math.PI / 2;
     scene.add(ring);
-    rockMeshes.push({ mesh, ring, index: i });
+    rockMeshes.push({ mesh, ring, index: i, baseY: ty });
   });
 
   // ── CAMPFIRE (for cave/house/diy) ───────────────────────────
@@ -639,6 +639,13 @@
     camera.quaternion.setFromEuler(euler);
   });
 
+  // Mobile Camera Support
+  document.addEventListener('mobilelook', (e) => {
+      camera.rotation.y -= e.detail.movementX * 0.005;
+      camera.rotation.x -= e.detail.movementY * 0.005;
+      camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+  });
+
   const keys = {};
   document.addEventListener("keydown", e => {
     keys[e.code] = true;
@@ -720,7 +727,7 @@
     // Sticks
     for (const s of stickMeshes) {
       if (collectedSticks.has(s.index)) continue;
-      if (p.distanceTo(stickPositions[s.index]) < 2.5) {
+      if (p.distanceTo(stickPositions[s.index]) < 5.0) {
         interactPrompt = `Press [E] to pick up stick (${hasSticks}/3)`;
         canInteract = true; interactType = 'stick'; interactTarget = s;
         return;
@@ -729,7 +736,7 @@
     // Rocks
     for (const r of rockMeshes) {
       if (collectedRocks.has(r.index)) continue;
-      if (p.distanceTo(rockPositions[r.index]) < 2.5) {
+      if (p.distanceTo(rockPositions[r.index]) < 5.0) {
         interactPrompt = `Press [E] to pick up rock (${hasRocks}/2)`;
         canInteract = true; interactType = 'rock'; interactTarget = r;
         return;
@@ -744,7 +751,7 @@
     }
 
     // Cave shelter
-    if (p.distanceTo(CAVE_POS) < 5) {
+    if (p.distanceTo(CAVE_POS) < 8) {
       if (!inShelter) {
         interactPrompt = 'Press [E] to take shelter in cave';
         canInteract = true; interactType = 'shelter_cave';
@@ -759,7 +766,7 @@
 
     // House shelter
     const hDist = Math.sqrt(Math.pow(p.x - HOUSE_POS.x, 2) + Math.pow(p.z - HOUSE_POS.z, 2));
-    if (hDist < 4) {
+    if (hDist < 7) {
       if (!inShelter) {
         interactPrompt = 'Press [E] to shelter in abandoned house';
         canInteract = true; interactType = 'shelter_house';
@@ -773,7 +780,7 @@
     }
 
     // DIY shelter spot
-    if (p.distanceTo(DIY_POS) < 5) {
+    if (p.distanceTo(DIY_POS) < 7) {
       if (!inShelter && hasSticks >= 3) {
         interactPrompt = 'Press [E] to build a lean-to shelter';
         canInteract = true; interactType = 'shelter_diy';
@@ -916,12 +923,12 @@
   function animateCollectibles(t) {
     for (const s of stickMeshes) {
       if (collectedSticks.has(s.index)) continue;
-      s.ring.position.y = 0.8 + Math.sin(t * 3 + s.index) * 0.1;
+      s.ring.position.y = s.baseY + 0.15 + Math.sin(t * 3 + s.index) * 0.06;
       s.ring.rotation.z = t * 2;
     }
     for (const r of rockMeshes) {
       if (collectedRocks.has(r.index)) continue;
-      r.ring.position.y = 0.4 + Math.sin(t * 3 + r.index + 2) * 0.1;
+      r.ring.position.y = r.baseY + 0.12 + Math.sin(t * 3 + r.index + 2) * 0.06;
       r.ring.rotation.z = t * 2;
     }
   }
@@ -961,11 +968,11 @@
     statusEl = document.createElement("div"); statusEl.id = "game-status"; wrapper.appendChild(statusEl);
 
     promptEl = document.createElement("div"); promptEl.id = "interact-prompt";
-    promptEl.style.cssText = `position:absolute;bottom:130px;left:50%;transform:translateX(-50%);font-family:var(--font-cond,'Barlow Condensed',sans-serif);font-size:1.2rem;font-weight:700;letter-spacing:0.06em;color:#fff;background:rgba(0,0,0,0.75);border:2px solid rgba(255,255,255,0.3);padding:10px 24px;border-radius:8px;pointer-events:none;z-index:25;display:none;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,0.9);box-shadow:0 4px 16px rgba(0,0,0,0.4);`;
+    promptEl.style.cssText = `position:absolute;bottom:100px;left:50%;transform:translateX(-50%);font-family:'Barlow Condensed',sans-serif;font-size:1.8rem;font-weight:700;letter-spacing:0.08em;color:#fff;background:rgba(0,0,0,0.82);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.18);border-top:3px solid rgba(255,255,255,0.6);padding:16px 44px 14px;border-radius:12px;pointer-events:none;z-index:25;display:none;text-align:center;text-shadow:0 0 20px rgba(255,255,255,0.3),0 1px 6px rgba(0,0,0,0.95);box-shadow:0 4px 32px rgba(0,0,0,0.6);white-space:nowrap;`;
     wrapper.appendChild(promptEl);
 
     itemEl = document.createElement("div"); itemEl.id = "item-indicator";
-    itemEl.style.cssText = `position:absolute;top:188px;left:20px;font-family:var(--font-cond,'Barlow Condensed',sans-serif);font-size:0.95rem;font-weight:700;letter-spacing:0.08em;color:#e8e0d0;background:rgba(0,0,0,0.65);border:2px solid rgba(255,255,255,0.18);padding:8px 16px;border-radius:6px;pointer-events:none;z-index:20;white-space:pre-line;text-shadow:0 1px 3px rgba(0,0,0,0.8);box-shadow:0 2px 8px rgba(0,0,0,0.3);`;
+    itemEl.style.cssText = `position:absolute;top:316px;left:0;font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:700;letter-spacing:0.12em;color:#e8e0d0;background:rgba(0,0,0,0.55);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.08);border-left:4px solid rgba(255,255,255,0.4);border-radius:0 10px 10px 0;padding:12px 20px 12px 16px;pointer-events:none;z-index:20;white-space:pre-line;text-shadow:0 1px 6px rgba(0,0,0,0.9);box-shadow:-2px 0 18px rgba(255,255,255,0.06),0 4px 20px rgba(0,0,0,0.5);`;
     wrapper.appendChild(itemEl);
 
     outcomeEl = document.createElement("div"); outcomeEl.id = "outcome-screen"; outcomeEl.style.display = "none"; wrapper.appendChild(outcomeEl);
@@ -1014,9 +1021,11 @@
     panicFill.style.width = panic + "%";
     panicFill.style.background = `rgb(${Math.round(p * 210)},${Math.round((1 - p) * 170 + 20)},20)`;
 
-    const h = health / 100;
     healthFill.style.width = Math.max(0, health) + "%";
-    healthFill.style.background = `rgb(${Math.round((1 - h) * 210)},${Math.round(h * 170 + 20)},20)`;
+    healthFill.classList.toggle('health-warning', health <= 50 && health > 25);
+    healthFill.classList.toggle('health-danger',  health <= 25);
+    const hw = document.getElementById("health-wrap");
+    if (hw) hw.classList.toggle('danger', health <= 25);
 
     warmthFill.style.width = warmth + "%";
     if (warmth < 25) warmthFill.style.background = '#3b82f6';
@@ -1042,21 +1051,27 @@
     if (fireLit && inShelter) {
       statusEl.textContent = "✓ Safe and warm. You'll survive the night.";
       statusEl.style.color = "#4ade80";
+      statusEl.classList.remove('urgent');
     } else if (inShelter && !fireLit) {
       statusEl.textContent = "⚠ You're sheltered but freezing. Make a fire!";
       statusEl.style.color = "#fbbf24";
+      statusEl.classList.add('urgent');
     } else if (progress < 0.2) {
       statusEl.textContent = "The sun is setting. Find shelter before dark...";
       statusEl.style.color = "#d1c9bb";
+      statusEl.classList.remove('urgent');
     } else if (progress < 0.5) {
       statusEl.textContent = "⚠ Getting darker. Follow the distant light or find shelter nearby.";
       statusEl.style.color = "#fbbf24";
+      statusEl.classList.add('urgent');
     } else if (progress < 0.8) {
       statusEl.textContent = "⚠ It's getting dangerously cold. Find shelter NOW!";
       statusEl.style.color = "#f97316";
+      statusEl.classList.add('urgent');
     } else {
       statusEl.textContent = "⚠ HYPOTHERMIA SETTING IN! You need shelter and warmth!";
       statusEl.style.color = "#ef4444";
+      statusEl.classList.add('urgent');
     }
   }
 
@@ -1104,6 +1119,14 @@
           <div class="outcome-stat">Health: <strong>${Math.max(0, Math.round(health))}%</strong></div>
           <div class="outcome-stat">Panic: <strong>${Math.round(panic)}%</strong></div>
           <div class="outcome-stat">Shelter: <strong>${shelterType || 'None'}</strong> | Fire: <strong>${fireLit ? 'Yes' : 'No'}</strong></div>
+        </div>
+        <div class="outcome-tips">
+          <div class="outcome-tips-title">🌲 Lost in the Woods Survival Tips</div>
+          <div class="outcome-tip">Shelter is your #1 priority — exposure kills faster than hunger or thirst.</div>
+          <div class="outcome-tip">Follow rivers or streams downstream — they almost always lead to civilization.</div>
+          <div class="outcome-tip">Build your fire INSIDE shelter if possible; it multiplies warmth dramatically.</div>
+          <div class="outcome-tip">Three fires in a triangle is the universal distress signal for rescuers.</div>
+          <div class="outcome-tip">Stay calm and use STOP: Stop, Think, Observe, Plan — panic wastes energy.</div>
         </div>
         <button class="outcome-btn" onclick="location.reload()">↩ Try Again</button>
         <button class="menu-btn" onclick="backToMenu()">← Back to Menu</button>

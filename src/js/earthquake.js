@@ -637,6 +637,13 @@
       camera.quaternion.setFromEuler(euler);
     });
 
+    // Mobile Camera Support
+  document.addEventListener('mobilelook', (e) => {
+      camera.rotation.y -= e.detail.movementX * 0.005;
+      camera.rotation.x -= e.detail.movementY * 0.005;
+      camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+  });
+
     const keys={};
     document.addEventListener("keydown",e=>{
       keys[e.code]=true;
@@ -868,9 +875,11 @@
       const p=panic/100;
       panicFill.style.width=panic+"%";
       panicFill.style.background=`rgb(${Math.round(p*210)},${Math.round((1-p)*170+20)},20)`;
-      const h=health/100;
-      healthFill.style.width=health+"%";
-      healthFill.style.background=`rgb(${Math.round((1-h)*210)},${Math.round(h*170+20)},20)`;
+      healthFill.style.width = Math.max(0, health) + "%";
+      healthFill.classList.toggle('health-warning', health <= 50 && health > 25);
+      healthFill.classList.toggle('health-danger',  health <= 25);
+      const hw = document.getElementById("health-wrap");
+      if (hw) hw.classList.toggle('danger', health <= 25);
       staminaFill.style.width=stamina+"%";
       staminaFill.style.backgroundColor=stamina<25?"#f87171":"#38bdf8";
       safeEl.style.display=(gameState===STATE.QUAKE&&isHiding)?"block":"none";
@@ -884,6 +893,7 @@
           ?"Explore the hackathon hall. Something feels off..."
           :"⚠ The floor is trembling... brace yourself.";
         statusEl.style.color=rem>15?"#d1c9bb":"#fbbf24";
+        statusEl.classList.remove('urgent');
       }
       if(gameState===STATE.QUAKE){
         timerEl.textContent=`QUAKE: ${Math.ceil(QUAKE_DURATION-quakeTimer)}s`;
@@ -894,12 +904,15 @@
         if(isHiding){
           statusEl.textContent="✓ Stay hidden! Wait for it to pass...";
           statusEl.style.color="#4ade80";
+          statusEl.classList.remove('urgent');
         } else if(nearAny&&!isCrouching){
           statusEl.textContent="⬇ CROUCH [C] to get underneath the table!";
           statusEl.style.color="#fbbf24";
+          statusEl.classList.add('urgent');
         } else {
           statusEl.textContent="⚠ GET UNDER A TABLE — NOW!";
           statusEl.style.color="#f87171";
+          statusEl.classList.add('urgent');
         }
       }
     }
@@ -935,6 +948,14 @@
           <div class="outcome-stats">
             <div class="outcome-stat" style="color:${accent}">${panicResult}</div>
             <div class="outcome-stat">Health remaining: <strong>${Math.max(0,Math.round(health))}%</strong></div>
+          </div>
+          <div class="outcome-tips">
+            <div class="outcome-tips-title">🏢 Earthquake Survival Tips</div>
+            <div class="outcome-tip">DROP, COVER, and HOLD ON under a sturdy table or desk immediately.</div>
+            <div class="outcome-tip">Stay away from windows, shelves, and heavy objects that can fall.</div>
+            <div class="outcome-tip">Never run outside during shaking — most injuries happen trying to flee.</div>
+            <div class="outcome-tip">If no table is nearby, cover your head and neck against an interior wall.</div>
+            <div class="outcome-tip">After shaking stops, check for injuries and exit carefully — aftershocks can follow.</div>
           </div>
           <button class="outcome-btn" onclick="location.reload()">↩ Try Again</button>
           <button class="menu-btn" onclick="backToMenu()">← Back to Menu</button>
