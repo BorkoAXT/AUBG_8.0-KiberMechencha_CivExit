@@ -140,3 +140,4 @@ vite.config.ts.timestamp-*
 
 # KEYS
 src/js/config.js
+admin-migrate.htmladmin-migrate.html
